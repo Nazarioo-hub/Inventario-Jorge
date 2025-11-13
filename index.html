@@ -209,22 +209,40 @@ function atualizarUI(){
     atualizarExpoPDF();
 }
 
-function atualizarTabelaCasa(){
+function atualizarTabelaCasa() {
     const tb = document.querySelector('#tableCasa tbody');
     tb.innerHTML = "";
-    fotos.forEach(foto=>{
-        // encontrar tamanhos disponíveis (nome) que estão selecionados (disponível true)
-        let tamanhosDisponiveis = tamanhos
-            .filter(t => foto.tamanhos[t.id].disponivel)
-            .map(t => {
-                let dt = foto.tamanhos[t.id];
-                return dt.enviado ? `${t.nome} (em exposição)` : t.nome;
-            });
-        // Se não tiver nenhum tamanho disponível, pular
+
+    // Agrupar fotos por nome
+    const grupos = {};
+    fotos.forEach(foto => {
+        if (!grupos[foto.nome]) {
+            grupos[foto.nome] = {
+                fotoGeral: foto,
+                tamanhos: []
+            };
+        }
+        tamanhos.forEach(t => {
+            if (foto.tamanhos[t.id].disponivel) {
+                grupos[foto.nome].tamanhos.push({
+                    id: t.id,
+                    nome: t.nome,
+                    enviado: foto.tamanhos[t.id].enviado
+                });
+            }
+        });
+    });
+
+    // Renderizar cada grupo como uma linha
+    Object.values(grupos).forEach(grupo => {
+        const foto = grupo.fotoGeral;
+        const tamanhosDisponiveis = grupo.tamanhos.map(t => t.enviado ? `${t.nome} (em exposição)` : t.nome);
+
+        // Se nenhum tamanho disponível, pular
         if (tamanhosDisponiveis.length === 0) return;
 
-        // Verifica se algum tamanho já está enviado para controle do checkbox
-        let temEnviado = tamanhos.some(t=> foto.tamanhos[t.id].enviado);
+        // Se alguma tamanho está enviado
+        const temEnviado = grupo.tamanhos.some(t => t.enviado);
 
         let tr = document.createElement("tr");
         tr.innerHTML = `
@@ -234,17 +252,18 @@ function atualizarTabelaCasa(){
             <td>
                 ${temEnviado
                     ? "Indisponível (em exposição)"
-                    : `<input type="checkbox" onchange="marcarEnviadoFoto('${foto.id}', this.checked)">
-                    <label>Ir para exposição</label>`
+                    : `<input type="checkbox" onchange="marcarEnviadoGrupo('${foto.nome}', this.checked)">
+                       <label>Ir para exposição</label>`
                 }
             </td>
-            <td><input type="text" placeholder="Nome exposição" value="" disabled></td>
+            <td><input type="text" placeholder="Nome exposição" disabled></td>
             <td>---</td>
-            <td><button class="btn" onclick="removerFoto('${foto.id}')">🗑</button></td>
+            <td><button class="btn" onclick="removerFotoGrupo('${foto.nome}')">🗑</button></td>
         `;
         tb.appendChild(tr);
     });
 }
+
 
 function marcarEnviadoFoto(fid, valor) {
     const fot = fotos.find( f => f.id === fid);
