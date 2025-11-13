@@ -88,6 +88,7 @@
 <section>
     <h2>Fotos em Casa</h2>
     <div class="card">
+        <button class="btn" onclick="apagarTodasFotos()">Apagar Todas as Fotos em Casa</button>
         <table id="tableCasa">
             <thead>
                 <tr>
@@ -180,6 +181,14 @@ document.getElementById('addForm').onsubmit = function(e){
         inserirFoto(nome, imageUrl);
     }
 };
+
+function apagarTodasFotos() {
+    if(confirm("Tem a certexa que deseja apagar todas as fotos em casa?")) {
+        fotos = [];
+        salvarLocalStorage();
+        atualizarUI();
+    }
+}
 
 function inserirFoto(nome, imageUrl) {
     let tam = [];
