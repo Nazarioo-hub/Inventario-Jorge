@@ -398,34 +398,61 @@ function atualizarTabelaExpo(){
     tb.innerHTML = "";
     const selectExpo = document.getElementById("selectExpoPDF");
     const expoFiltro = selectExpo.value || "";
-    document.getElementById("expoSelecionada").textContent = expoFiltro?("Exposição "+expoFiltro):"";
-    fotos.forEach(foto=>{
-        tamanhos.forEach(tam=>{
-            let dt = foto.tamanhos[tam.id];
-            if(dt.disponivel && dt.enviado){
-                if(expoFiltro==="" || dt.exposicao===expoFiltro){
-                    let tr = document.createElement("tr");
-                    tr.innerHTML = `
-                        <td>
-                            <label class="checklist"><input type="checkbox" ${dt.risked?'checked':''} onchange="marcarRisked('${foto.id}','${tam.id}',this.checked)">${dt.risked?'✅':'☐'}</label>
-                        </td>
-                        <td><img class="thumb" src="${foto.imageUrl}"></td>
-                        <td>${foto.nome}</td>
-                        <td>${tam.nome}</td>
-                        <td>${dt.exposicao}</td>
-                        <td>
-                            <span>De:</span> <span>${dt.dataInicio}</span>
-                            <span>Até:</span> <span>${dt.dataFim}</span>
-                        </td>
-                        <td><button class="btn" onclick="removerDaExposicao('${foto.id}','${tam.id}')">🗑</button></td>
-                    `;
-                    if(dt.risked) tr.classList.add('risked');
-                    tb.appendChild(tr);
-                }
-            }
+    document.getElementById("expoSelecionada").textContent = expoFiltro ? ("Exposição " + expoFiltro) : "";
+
+    // Agrupar fotos pelo id para listar uma linha por foto
+    const grupos = {};
+    fotos.forEach(foto => {
+        // Filtrar tamanhos enviados
+        const tamanhosEnviados = tamanhos.filter(t => {
+            return foto.tamanhos[t.id].disponivel && foto.tamanhos[t.id].enviado && (expoFiltro === "" || foto.tamanhos[t.id].exposicao === expoFiltro);
         });
+        if (tamanhosEnviados.length > 0) {
+            grupos[foto.id] = {
+                foto: foto,
+                tamanhos: tamanhosEnviados
+            };
+        }
+    });
+
+    // Renderizar cada grupo por linha
+    Object.values(grupos).forEach(grupo => {
+        const { foto, tamanhos } = grupo;
+
+        let tamanhosTexto = tamanhos.map(t => t.nome).join(", ");
+
+        // Para definir se alguma está marcada como risked
+        let riskedAlgum = tamanhos.some(t => foto.tamanhos[t.id].risked);
+
+        // Construir as checkboxes de risked para cada tamanho numa célula separada
+        let riskedChecks = tamanhos.map(t => {
+            const checked = foto.tamanhos[t.id].risked ? 'checked' : '';
+            return `<label class="checklist"><input type="checkbox" ${checked} onchange="marcarRisked('${foto.id}', '${t.id}', this.checked)">${checked ? '✅' : '☐'}</label>`;
+        }).join(" ");
+
+        // Botões de remover para cada tamanho separados
+        let removerBotoes = tamanhos.map(t => {
+            return `<button class="btn" title="Remover tamanho ${t.nome}" onclick="removerDaExposicao('${foto.id}','${t.id}')">🗑</button>`;
+        }).join(" ");
+
+        let tr = document.createElement("tr");
+        tr.classList.toggle('risked', riskedAlgum);
+        tr.innerHTML = `
+            <td>${riskedChecks}</td>
+            <td><img class="thumb" src="${foto.imageUrl}"></td>
+            <td>${foto.nome}</td>
+            <td>${tamanhosTexto}</td>
+            <td>${expoFiltro}</td>
+            <td>
+                <span>De:</span> ${tamanhos.map(t => foto.tamanhos[t.id].dataInicio).join(", ")}<br>
+                <span>Até:</span> ${tamanhos.map(t => foto.tamanhos[t.id].dataFim).join(", ")}
+            </td>
+            <td>${removerBotoes}</td>
+        `;
+        tb.appendChild(tr);
     });
 }
+
 
 // Marcar como risked (checklist visual)
 function marcarRisked(fid,tid,r){
