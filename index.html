@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <title>Catálogo de Fotos e Exposições</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { font-family: Arial,sans-serif; background: #222; color: #eee; margin:0; }
+        header { background: #333; padding: 1em; text-align: center; font-size: 1.6em; }
+        main { display: flex; flex-wrap: wrap; margin:0; }
+        section { flex: 1; min-width:300px; padding:1em; box-sizing: border-box; }
+        h2 { margin-top:0; color: #36a; }
+        .card { background:#2A2A2A; padding:1em; margin:1em 0; border-radius:8px; }
+        table { width:100%; border-collapse: collapse; margin-bottom:1em; }
+        th, td { padding:0.5em; border-bottom:1px solid #444; }
+        th { color: #ddd; text-align:left; background: #222;}
+        img.thumb { width:60px; height:auto; border-radius:4px; }
+        .area-expo { background:#1B2936; border: 1px solid #465A76; }
+        label.checklist { margin-right:10px; }
+        .btn { background:#36a; color:#fff; border:none; padding:0.4em 1em; border-radius:5px; cursor:pointer; margin-right: 8px;}
+        .btn:active { filter: brightness(0.85);}
+        input[type="text"], input[type="date"] { background:#333; color:#fff; border:1px solid #555; border-radius:4px; padding:0.4em;}
+        input[type="file"] { color:#fff;}
+        .risked { text-decoration: line-through; color: #c90; }
+        .expo-title { font-size:1.2em; color:#ff8c1a; margin:0.4em 0;}
+        .hidden { display:none;}
+    </style>
+</head>
+<body>
+
+<header>Catálogo de Fotos e Exposições</header>
+
+<script>
+  const STORAGE_KEY = "catalogoFotosExpsoicoes";
+
+  let fotos = [];
+
+  function salvarLocalStorage() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(fotos));
+  }
+
+  function carregarLocalStorage() {
+    const data = localStorage.getItem(STORAGE_KEY);
+    if (data) {
+      fotos = JSON.parse(data);
+    } else {
+      fotos = [];
+    }
+  }
+</script>
+
+<main>
+
+<section style="flex-basis:400px;">
+    <h2>Adicionar Foto</h2>
+    <div class="card">
+        <form id="addForm">
+            <label>Nome da foto:<br>
+                <input type="text" required id="nomeFoto">
+            </label><br><br>
+            <label>Imagem da foto (URL ou ficheiro):<br>
+                <input type="file" accept="image/*" id="filePhoto">
+                <br>ou<br>
+                <input type="text" placeholder="URL da imagem" id="urlPhoto">
+            </label><br><br>
+            <label><input type="checkbox" id="tamP"> Pequeno</label>
+            <label><input type="checkbox" id="tamM"> Médio</label>
+            <label><input type="checkbox" id="tamG"> Grande</label>
+            <br><br>
+            <button class="btn" type="submit">Adicionar</button>
+        </form>
+    </div>
+    <div class="card">
+        <button class="btn" onclick="exportJSON()">Exportar JSON</button>
+        <input type="file" accept="application/json" onchange="importJSON(event)">
+        <br><br>
+        <label>Exportar PDF da exposição:
+            <select id="selectExpoPDF"></select>
+            <button class="btn" onclick="exportPDF()">Exportar PDF</button>
+        </label>
+    </div>
+    <div class="card">
+        <h2>Resumo</h2>
+        <div id="resumoPainel"></div>
+    </div>
+</section>
+
+<section>
+    <h2>Fotos em Casa</h2>
+    <div class="card">
+        <table id="tableCasa">
+            <thead>
+                <tr>
+                    <th>Foto</th>
+                    <th>Nome</th>
+                    <th>Tamanho</th>
+                    <th>Enviar para Exposição</th>
+                    <th>Destino</th>
+                    <th>Datas</th>
+                    <th>Remover</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</section>
+
+<section class="area-expo">
+    <h2>Fotos em Exposição</h2>
+    <div class="expo-title" id="expoSelecionada"></div>
+    <div class="card">
+      <button class="btn" onclick="removerSelecionadasDaExposicao()">Apagar Fotos Selecionadas da Exposição</button>
+        <table id="tableExpo">
+            <thead>
+                <tr>
+                    <th>✓ Checklist</th>
+                    <th>Foto</th>
+                    <th>Nome</th>
+                    <th>Tamanho</th>
+                    <th>Exposição</th>
+                    <th>Datas</th>
+                    <th>Remover</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</section>
+
+</main>
+
+
+
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+const tamanhos = [
+    { id: "p", nome:"Pequeno" },
+    { id: "m", nome:"Médio" },
+    { id: "g", nome:"Grande" }
+];
+
+//let fotos = [];
+
+function novaFotoObj({nome, imageUrl, tamanhosDisponiveis}) {
+    let obj = {
+        id: 'f' + Date.now() + Math.floor(Math.random()*9999),
+        nome,
+        imageUrl,
+        tamanhos: {}
+    };
+    tamanhos.forEach(t=>{
+        obj.tamanhos[t.id] = {
+            disponivel: tamanhosDisponiveis.includes(t.id),
+            enviado: false,
+            exposicao: "",
+            dataInicio: "",
+            dataFim: "",
+            risked: false
+        }
+    });
+    return obj;
+}
+
+// Adicionar foto (form)
+document.getElementById('addForm').onsubmit = function(e){
+    e.preventDefault();
+    let nome = document.getElementById('nomeFoto').value.trim();
+    let imageUrl = document.getElementById('urlPhoto').value.trim();
+    // Se foi upload de ficheiro
+    const fileInput = document.getElementById('filePhoto');
+    if(fileInput.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(ev) {
+            inserirFoto(nome, ev.target.result);
+        };
+        reader.readAsDataURL(fileInput.files[0]);
+    } else {
+        inserirFoto(nome, imageUrl);
+    }
+};
+
+function inserirFoto(nome, imageUrl) {
+    let tam = [];
+    if(document.getElementById('tamP').checked) tam.push("p");
+    if(document.getElementById('tamM').checked) tam.push("m");
+    if(document.getElementById('tamG').checked) tam.push("g");
+    if(!nome || !imageUrl || tam.length===0) {
+        alert("Preencha todos os campos (nome, imagem e tamanhos)!");
+        return;
+    }
+    fotos.push(novaFotoObj({nome,imageUrl,tamanhosDisponiveis:tam}));
+    document.getElementById('nomeFoto').value="";
+    document.getElementById('urlPhoto').value="";
+    document.getElementById('filePhoto').value="";
+    document.getElementById('tamP').checked=false;
+    document.getElementById('tamM').checked=false;
+    document.getElementById('tamG').checked=false;
+    atualizarUI();
+}
+
+// Atualizar interface
+function atualizarUI(){
+    salvarLocalStorage();
+    atualizarTabelaCasa();
+    atualizarTabelaExpo();
+    atualizarResumo();
+    atualizarExpoPDF();
+}
+
+function atualizarTabelaCasa(){
+    const tb = document.querySelector('#tableCasa tbody');
+    tb.innerHTML = "";
+    fotos.forEach(foto=>{
+        tamanhos.forEach(tam=>{
+            let dt = foto.tamanhos[tam.id];
+            if(dt.disponivel){
+                let tr = document.createElement("tr");
+                tr.innerHTML = `
+                    <td><img class="thumb" src="${foto.imageUrl}"></td>
+                    <td>${foto.nome}</td>
+                    <td>${tam.nome}</td>
+                    <td>
+                        ${dt.enviado
+                            ? "Indisponível (em exposição)"
+                            : `<input type="checkbox" onchange="marcarEnviado('${foto.id}','${tam.id}',this.checked)">
+                               <label>Ir para exposição</label>`
+                        }
+                    </td>
+                    <td>
+                        <input type="text" placeholder="Nome exposição" value="${dt.exposicao}" onchange="definirExposicao('${foto.id}','${tam.id}',this.value)" ${dt.enviado ? "disabled" : ""}>
+                    </td>
+                    <td>
+                        <span>De:</span>
+                        <input type="date" value="${dt.dataInicio}" onchange="definirData('${foto.id}','${tam.id}','inicio',this.value)" ${dt.enviado ? "disabled" : ""}>
+                        <span>Até:</span>
+                        <input type="date" value="${dt.dataFim}" onchange="definirData('${foto.id}','${tam.id}','fim',this.value)" ${dt.enviado ? "disabled" : ""}>
+                    </td>
+                    <td>
+                        <button class="btn" onclick="removerFoto('${foto.id}')">🗑</button>
+                    </td>
+                `;
+                tb.appendChild(tr);
+                
+            }
+        });
+    });
+}
+
+
+
+
+// Marcar foto/tamanho como enviado
+function marcarEnviado(fid,tid,v){
+    const foto = fotos.find(f=> f.id === fid);
+    if(!foto) return;
+    foto.tamanhos[tid].enviado = v;
+    if(!v){
+        foto.tamanhos[tid].exposicao = "";
+        foto.tamanhos[tid].dataInicio = "";
+        foto.tamanhos[tid].dataFim = "";
+        foto.tamanhos[tid].risked = false;
+    }
+    atualizarUI();
+}
+
+function definirExposicao(fid,tid,expo){
+    const foto = fotos.find(f=>f.id===fid);
+    if(!foto) return;
+    foto.tamanhos[tid].exposicao = expo;
+    atualizarUI();
+}
+
+function definirData(fid,tid,qual,data){
+    const foto = fotos.find(f=>f.id===fid);
+    if(!foto) return;
+    if(qual==="inicio") foto.tamanhos[tid].dataInicio = data;
+    if(qual==="fim") foto.tamanhos[tid].dataFim = data;
+    atualizarUI();
+}
+
+function removerSelecionadasDaExposicao(){
+    fotos.forEach(foto=>{
+        tamanhos.forEach(tam=>{
+            let dt = foto.tamanhos[tam.id];
+            if(dt.enviado && dt.risked){
+                // Remove da exposição sem apagar do inventário
+                dt.enviado = false;
+                dt.exposicao = "";
+                dt.dataInicio = "";
+                dt.dataFim = "";
+                dt.risked = false;
+            }
+        });
+    });
+    atualizarUI();
+}
+
+
+
+// Tabela de exposição
+function atualizarTabelaExpo(){
+    const tb = document.querySelector('#tableExpo tbody');
+    tb.innerHTML = "";
+    const selectExpo = document.getElementById("selectExpoPDF");
+    const expoFiltro = selectExpo.value || "";
+    document.getElementById("expoSelecionada").textContent = expoFiltro?("Exposição "+expoFiltro):"";
+    fotos.forEach(foto=>{
+        tamanhos.forEach(tam=>{
+            let dt = foto.tamanhos[tam.id];
+            if(dt.disponivel && dt.enviado){
+                if(expoFiltro==="" || dt.exposicao===expoFiltro){
+                    let tr = document.createElement("tr");
+                    tr.innerHTML = `
+                        <td>
+                            <label class="checklist"><input type="checkbox" ${dt.risked?'checked':''} onchange="marcarRisked('${foto.id}','${tam.id}',this.checked)">${dt.risked?'✅':'☐'}</label>
+                        </td>
+                        <td><img class="thumb" src="${foto.imageUrl}"></td>
+                        <td>${foto.nome}</td>
+                        <td>${tam.nome}</td>
+                        <td>${dt.exposicao}</td>
+                        <td>
+                            <span>De:</span> <span>${dt.dataInicio}</span>
+                            <span>Até:</span> <span>${dt.dataFim}</span>
+                        </td>
+                        <td><button class="btn" onclick="removerDaExposicao('${foto.id}','${tam.id}')">🗑</button></td>
+                    `;
+                    if(dt.risked) tr.classList.add('risked');
+                    tb.appendChild(tr);
+                }
+            }
+        });
+    });
+}
+
+// Marcar como risked (checklist visual)
+function marcarRisked(fid,tid,r){
+    const foto = fotos.find(f=>f.id===fid);
+    if(!foto) return;
+    foto.tamanhos[tid].risked = r;
+    atualizarUI();
+}
+
+// Remover foto
+function removerFoto(fid){
+    fotos = fotos.filter(f=>f.id!==fid);
+    atualizarUI();
+}
+
+function removerDaExposicao(fid, tid){
+  const foto = fotos.find(f => f.id === fid);
+  if (!foto) return;
+  foto.tamanhos[tid].enviado = false;
+  foto.tamanhos[tid].exposicao = "";
+  foto.tamanhos[tid].dataInicio = "";
+  foto.tamanhos[tid].dataFim = "";
+  foto.tamanhos[tid].risked = false;
+  atualizarUI();
+}
+
+// Painel resumo
+function atualizarResumo(){
+    let total = fotos.length;
+    let disp = { p:0, m:0, g:0 }, envio = { p:0, m:0, g:0 }, exps = {};
+    fotos.forEach(foto=>{
+        tamanhos.forEach(t=>{
+            let dt = foto.tamanhos[t.id];
+            if(dt.disponivel) disp[t.id]++;
+            if(dt.disponivel && dt.enviado){
+                envio[t.id]++;
+                if(dt.exposicao)
+                    exps[dt.exposicao] = (exps[dt.exposicao]||0)+1;
+            }
+        });
+    });
+    let html = `
+        <b>Total de fotos:</b> ${total}<br>
+        <b>Disponíveis:</b>
+        Pequeno: ${disp.p},
+        Médio: ${disp.m},
+        Grande: ${disp.g} <br>
+        <b>Enviados:</b>
+        Pequeno: ${envio.p},
+        Médio: ${envio.m},
+        Grande: ${envio.g}
+        <br>
+        <b>Exposições:</b>
+        <ul>
+    `;
+    Object.keys(exps).forEach(k=>{
+        html += `<li>${k}: ${exps[k]} fotos</li>`;
+    });
+    html += "</ul>";
+    document.getElementById('resumoPainel').innerHTML = html;
+}
+
+// Exportar JSON
+function exportJSON(){
+    const dataStr = JSON.stringify(fotos, null, 4);
+    const blob = new Blob([dataStr], {type: "application/json"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "fotos-exposicoes.json";
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(()=>document.body.removeChild(a),1000);
+}
+
+// Importar JSON
+function importJSON(event){
+    const file = event.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e){
+        fotos = JSON.parse(e.target.result);
+        atualizarUI();
+    }
+    reader.readAsText(file);
+}
+
+// Exportar PDF
+function atualizarExpoPDF(){
+    // Popular select com exposições disponíveis
+    const select = document.getElementById('selectExpoPDF');
+    let exps = {};
+    fotos.forEach(foto=>{
+        tamanhos.forEach(t=>{
+            const dt = foto.tamanhos[t.id];
+            if(dt.disponivel && dt.enviado && dt.exposicao){
+                exps[dt.exposicao]=1;
+            }
+        });
+    });
+    select.innerHTML = '<option value=""></option>';
+    Object.keys(exps).forEach(k=>{
+        let opt = document.createElement("option");
+        opt.value = k;
+        opt.text = k;
+        select.appendChild(opt);
+    });
+}
+function exportPDF() {
+    const expo = document.getElementById("selectExpoPDF").value;
+    if(!expo) { alert("Selecione uma exposição para exportar!"); return; }
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    let y = 10;
+    doc.setFontSize(16);
+    doc.text(`Fotos para exposição: ${expo}`,10,y);
+    y+=10;
+    fotos.forEach(foto=>{
+        tamanhos.forEach(t=>{
+            const dt = foto.tamanhos[t.id];
+            if(dt.disponivel && dt.enviado && dt.exposicao===expo){
+                // Adiciona imagem (base64, será pequena)
+                if (foto.imageUrl.startsWith("data")) {
+                    doc.addImage(foto.imageUrl, "JPEG", 10, y, 30, 30);
+                }
+                doc.setFontSize(10);
+                doc.text(`Nome: ${foto.nome}`,45,y+7);
+                doc.text(`Tamanho: ${t.nome}`,45,y+14);
+                doc.text(`De: ${dt.dataInicio}   Até: ${dt.dataFim}`,45,y+21);
+                y+=35;
+                if(y>270) { doc.addPage(); y=10;}
+            }
+        });
+    });
+    doc.save(`exposicao_${expo}.pdf`);
+}
+
+// Inicialização
+carregarLocalStorage();
+atualizarUI();
+
+</script>
+</body>
+</html>
