@@ -209,7 +209,6 @@ function atualizarUI(){
     atualizarExpoPDF();
 }
 
-// Tabela de fotos em casa
 function atualizarTabelaCasa(){
     const tb = document.querySelector('#tableCasa tbody');
     tb.innerHTML = "";
@@ -223,27 +222,32 @@ function atualizarTabelaCasa(){
                     <td>${foto.nome}</td>
                     <td>${tam.nome}</td>
                     <td>
-                        <input type="checkbox" ${dt.enviado?'checked':''} onchange="marcarEnviado('${foto.id}','${tam.id}',this.checked)">
-                        <label>${dt.enviado ? "Indisponível (em exposição)" : "Ir para exposição"}</label>
+                        ${dt.enviado
+                            ? "Indisponível (em exposição)"
+                            : `<input type="checkbox" onchange="marcarEnviado('${foto.id}','${tam.id}',this.checked)">
+                               <label>Ir para exposição</label>`
+                        }
                     </td>
                     <td>
-                        <input type="text" placeholder="Nome exposição" value="${dt.exposicao}" onchange="definirExposicao('${foto.id}','${tam.id}',this.value)" ${dt.enviado?'disabled':''}>
+                        <input type="text" placeholder="Nome exposição" value="${dt.exposicao}" onchange="definirExposicao('${foto.id}','${tam.id}',this.value)" ${dt.enviado ? "disabled" : ""}>
                     </td>
                     <td>
                         <span>De:</span>
-                        <input type="date" value="${dt.dataInicio}" onchange="definirData('${foto.id}','${tam.id}','inicio',this.value)" ${dt.enviado?'disabled':''}>
+                        <input type="date" value="${dt.dataInicio}" onchange="definirData('${foto.id}','${tam.id}','inicio',this.value)" ${dt.enviado ? "disabled" : ""}>
                         <span>Até:</span>
-                        <input type="date" value="${dt.dataFim}" onchange="definirData('${foto.id}','${tam.id}','fim',this.value)" ${dt.enviado?'disabled':''}>
+                        <input type="date" value="${dt.dataFim}" onchange="definirData('${foto.id}','${tam.id}','fim',this.value)" ${dt.enviado ? "disabled" : ""}>
                     </td>
                     <td>
                         <button class="btn" onclick="removerFoto('${foto.id}')">🗑</button>
                     </td>
                 `;
                 tb.appendChild(tr);
+                
             }
         });
     });
 }
+
 
 
 
