@@ -6,140 +6,178 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <style>
   body {
-    font-family: Arial, sans-serif;
-    background: #222;
-    color: #eee;
-    margin: 0;
-    padding: 10px;
-  }
-  header {
-    background: #333;
-    padding: 1em;
-    text-align: center;
-    font-size: 1.4em;
-    word-break: break-word;
-  }
+  font-family: Arial, sans-serif;
+  background: #222;
+  color: #eee;
+  margin: 0;
+  padding: 10px;
+}
+
+header {
+  background: #333;
+  padding: 1em;
+  text-align: center;
+  font-size: 1.4em;
+  word-break: break-word;
+}
+
+main {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 0 -0.5em;
+  gap: 10px;
+}
+
+section {
+  flex: 1 1 300px;
+  min-width: 280px;
+  padding: 0.5em 0.5em 1em;
+  box-sizing: border-box;
+  max-width: 100%;
+}
+
+h2 {
+  margin-top: 0;
+  color: #36a;
+  font-size: 1.2rem;
+}
+
+.card {
+  background: #2a2a2a;
+  padding: 1em;
+  margin: 1em 0;
+  border-radius: 8px;
+  word-break: break-word;
+}
+
+/* Adicione um wrapper com overflow-x para as tabelas */
+.table-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch; /* para suavizar scroll no iOS */
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1em;
+  font-size: 0.9rem;
+  /* Usa largura fixa para colunas, ajuda com overflow */
+  table-layout: fixed;
+}
+
+th, td {
+  padding: 0.4em;
+  border-bottom: 1px solid #444;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+}
+
+th {
+  color: #ddd;
+  text-align: left;
+  background: #222;
+}
+
+img.thumb {
+  width: 45px;
+  height: auto;
+  border-radius: 4px;
+}
+
+.btn {
+  background: #36a;
+  color: #fff;
+  border: none;
+  padding: 0.3em 0.8em;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-right: 6px;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.btn:active {
+  filter: brightness(0.85);
+}
+
+input[type="text"], input[type="date"] {
+  background: #333;
+  color: #fff;
+  border: 1px solid #555;
+  border-radius: 4px;
+  padding: 0.35em;
+  font-size: 0.85rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+label.checklist {
+  margin-right: 10px;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.area-expo {
+  background: #1b2936;
+  border: 1px solid #465a76;
+}
+
+.risked {
+  text-decoration: line-through;
+  color: #c90;
+}
+
+.expo-title {
+  font-size: 1.2em;
+  color: #ff8c1a;
+  margin: 0.4em 0;
+}
+
+/* Responsividade */
+@media screen and (max-width: 600px) {
   main {
-    display: flex;
-    flex-wrap: wrap;
-    margin: 0 -0.5em;
-    gap: 10px;
+    flex-direction: column;
+    margin: 0;
   }
   section {
-    flex: 1 1 300px;
-    min-width: 280px;
-    padding: 0.5em 0.5em 1em;
-    box-sizing: border-box;
+    padding: 0.5em;
+    min-width: 100%;
     max-width: 100%;
   }
-  h2 {
-    margin-top: 0;
-    color: #36a;
-    font-size: 1.2rem;
+  
+  /* Permite scroll horizontal nas tabelas no mobile */
+  .table-wrapper {
+    overflow-x: auto;
   }
-  .card {
-    background: #2a2a2a;
-    padding: 1em;
-    margin: 1em 0;
-    border-radius: 8px;
-    word-break: break-word;
-  }
+  
   table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-bottom: 1em;
-    font-size: 0.9rem;
+    font-size: 0.8rem;
+    /* Altera para layout automático para melhor quebra no mobile */
+    table-layout: auto;
   }
+  
   th, td {
-    padding: 0.4em;
-    border-bottom: 1px solid #444;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    vertical-align: middle;    
-    
-    
-    /*word-break: break-word;*/
+    padding: 0.3em;
+    /* Permite quebra de texto nas células para não ultrapassar */
+    white-space: normal;
+    word-break: break-word;
+    overflow-wrap: break-word;
   }
-  th {
-    color: #ddd;
-    text-align: left;
-    background: #222;
-  }
+  
   img.thumb {
-    width: 45px;
-    height: auto;
-    border-radius: 4px;
+    width: 40px;
   }
   .btn {
-    background: #36a;
-    color: #fff;
-    border: none;
-    padding: 0.3em 0.8em;
-    border-radius: 5px;
-    cursor: pointer;
-    margin-right: 6px;
-    font-size: 0.85rem;
-    white-space: nowrap;
-  }
-  .btn:active {
-    filter: brightness(0.85);
+    padding: 0.3em 0.7em;
+    font-size: 0.8rem;
   }
   input[type="text"], input[type="date"] {
-    background: #333;
-    color: #fff;
-    border: 1px solid #555;
-    border-radius: 4px;
-    padding: 0.35em;
-    font-size: 0.85rem;
-    width: 100%;
-    box-sizing: border-box;
+    font-size: 0.8rem;
   }
-  label.checklist {
-    margin-right: 10px;
-    font-size: 0.95rem;
-    cursor: pointer;
-  }
-  .area-expo {
-    background: #1b2936;
-    border: 1px solid #465a76;
-  }
-  .risked {
-    text-decoration: line-through;
-    color: #c90;
-  }
-  .expo-title {
-    font-size: 1.2em;
-    color: #ff8c1a;
-    margin: 0.4em 0;
-  }
-  @media screen and (max-width: 600px) {
-    main {
-      flex-direction: column;
-      margin: 0;
-    }
-    section {
-      padding: 0.5em;
-      min-width: 100%;
-      max-width: 100%;
-    }
-    table {
-      font-size: 0.8rem;
-    }
-    img.thumb {
-      width: 40px;
-    }
-    .btn {
-      padding: 0.3em 0.7em;
-      font-size: 0.8rem;
-    }
-    input[type="text"], input[type="date"] {
-      font-size: 0.8rem;
-    }
-    th, td {
-      padding: 0.3em;
-    }
-  }
+}
+
 </style>
 </head>
 <body>
@@ -183,7 +221,7 @@
 
   <section>
     <h2>Fotos em Casa</h2>
-    <div class="card">
+    <div class="table-wrapper">
       <button class="btn" onclick="apagarTodasFotos()">Apagar Todas as Fotos em Casa</button>
       <table id="tableCasa">
         <thead>
@@ -206,7 +244,7 @@
   <section class="area-expo">
     <h2>Fotos em Exposição</h2>
     <div class="expo-title" id="expoSelecionada"></div>
-    <div class="card">
+    <div class="table-wrapper">
       <button class="btn" onclick="removerSelecionadasDaExposicao()">Apagar Fotos Selecionadas da Exposição</button>
       <table id="tableExpo">
         <thead>
