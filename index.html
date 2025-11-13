@@ -190,6 +190,28 @@ function apagarTodasFotos() {
     }
 }
 
+function marcarEnviadoGrupo(nomeFoto, valor) {
+    fotos.forEach(foto => {
+        if (foto.nome === nomeFoto) {
+            tamanhos.forEach(t => {
+                if (foto.tamanhos[t.id].disponivel) {
+                    foto.tamanhos[t.id].enviado = valor;
+                    if (!valor) {
+                        foto.tamanhos[t.id].exposicao = "";
+                        foto.tamanhos[t.id].dataInicio = "";
+                        foto.tamanhos[t.id].dataFim = "";
+                        foto.tamanhos[t.id].risked = false;
+                    }
+                }
+            });
+        }
+    });
+    atualizarUI();
+}
+
+
+
+
 function inserirFoto(nome, imageUrl) {
     let tam = [];
     if(document.getElementById('tamP').checked) tam.push("p");
@@ -274,7 +296,7 @@ function atualizarTabelaCasa() {
 }
 
 
-function marcarEnviadoFoto(fid, valor) {
+/*function marcarEnviadoFoto(fid, valor) {
     const fot = fotos.find( f => f.id === fid);
     if(!foto) return;
     tamanhos.forEach(t => {
@@ -289,7 +311,7 @@ function marcarEnviadoFoto(fid, valor) {
         }
     });
     atualizarUI();
-}
+}*/
 
 
 
