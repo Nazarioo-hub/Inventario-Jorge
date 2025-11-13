@@ -253,7 +253,7 @@ function atualizarTabelaCasa(){
 
 // Marcar foto/tamanho como enviado
 function marcarEnviado(fid,tid,v){
-    const foto = fotos.find(f=>f.id===fid);
+    const foto = fotos.find(f=> f.id === fid);
     if(!foto) return;
     foto.tamanhos[tid].enviado = v;
     if(!v){
