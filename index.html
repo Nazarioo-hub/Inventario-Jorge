@@ -30,6 +30,25 @@
 
 <header>Catálogo de Fotos e Exposições</header>
 
+<script>
+  const STORAGE_KEY = "catalogoFotosExpsoicoes";
+
+  let fotos = [];
+
+  function salvarLocalStorage() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(fotos));
+  }
+
+  function carregarLocalStorage() {
+    const data = localStorage.getItem(STORAGE_KEY);
+    if (data) {
+      fotos = JSON.parse(data);
+    } else {
+      fotos = [];
+    }
+  }
+</script>
+
 <main>
 
 <section style="flex-basis:400px;">
@@ -109,6 +128,10 @@
 
 </main>
 
+
+
+
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
 const tamanhos = [
@@ -117,7 +140,7 @@ const tamanhos = [
     { id: "g", nome:"Grande" }
 ];
 
-let fotos = [];
+//let fotos = [];
 
 function novaFotoObj({nome, imageUrl, tamanhosDisponiveis}) {
     let obj = {
@@ -178,6 +201,7 @@ function inserirFoto(nome, imageUrl) {
 
 // Atualizar interface
 function atualizarUI(){
+    salvarLocalStorage();
     atualizarTabelaCasa();
     atualizarTabelaExpo();
     atualizarResumo();
@@ -411,6 +435,7 @@ function exportPDF() {
 }
 
 // Inicialização
+carregarLocalStorage();
 atualizarUI();
 
 </script>
