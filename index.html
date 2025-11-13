@@ -109,6 +109,7 @@
     <h2>Fotos em Exposição</h2>
     <div class="expo-title" id="expoSelecionada"></div>
     <div class="card">
+      <button class="btn" onclick="removerSelecionadasDaExposicao()">Apagar Fotos Selecionadas da Exposição</button>
         <table id="tableExpo">
             <thead>
                 <tr>
@@ -293,7 +294,7 @@ function removerSelecionadasDaExposicao(){
 }
 
 
-<button class="btn" onclick="removerSelecionadasDaExposicao()">Apagar Fotos Selecionadas da Exposição</button>
+
 // Tabela de exposição
 function atualizarTabelaExpo(){
     const tb = document.querySelector('#tableExpo tbody');
