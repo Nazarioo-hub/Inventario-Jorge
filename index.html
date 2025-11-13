@@ -362,18 +362,16 @@ function atualizarTabelaCasa() {
         });
     });
 
+
     // Renderizar cada grupo como uma linha
     Object.values(grupos).forEach(grupo => {
         const foto = grupo.fotoGeral;
         const tamanhosDisponiveis = grupo.tamanhos.map(t => t.enviado ? `${t.nome} (em exposição)` : t.nome);
 
-        // Se nenhum tamanho disponível, pular
         if (tamanhosDisponiveis.length === 0) return;
 
-        // Verifica se existe algum tamanho enviado
         const temEnviado = grupo.tamanhos.some(t => t.enviado);
 
-        // Pega o primeiro valor de exposicao dos tamanhos enviados, ou vazio
         let exposicaoValor = "";
         for (let t of grupo.tamanhos) {
             if (t.enviado && t.exposicao) {
@@ -401,10 +399,12 @@ function atualizarTabelaCasa() {
             </td>
             <td>---</td>
             <td><button class="btn" onclick="removerFotoGrupo('${foto.nome}')">🗑</button></td>
+            <td><button class="btn" onclick="abrirEditorTamanhos('${foto.nome}')">Editar Tamanhos</button></td>
         `;
         tb.appendChild(tr);
     });
 }
+
 
 
 /*function marcarEnviadoFoto(fid, valor) {
