@@ -258,7 +258,8 @@ function atualizarTabelaCasa() {
                 grupos[foto.nome].tamanhos.push({
                     id: t.id,
                     nome: t.nome,
-                    enviado: foto.tamanhos[t.id].enviado
+                    enviado: foto.tamanhos[t.id].enviado,
+                    exposicao: foto.tamanhos[t.id].exposicao
                 });
             }
         });
@@ -272,8 +273,17 @@ function atualizarTabelaCasa() {
         // Se nenhum tamanho disponível, pular
         if (tamanhosDisponiveis.length === 0) return;
 
-        // Se alguma tamanho está enviado
+        // Verifica se existe algum tamanho enviado
         const temEnviado = grupo.tamanhos.some(t => t.enviado);
+
+        // Pega o primeiro valor de exposicao dos tamanhos enviados, ou vazio
+        let exposicaoValor = "";
+        for (let t of grupo.tamanhos) {
+            if (t.enviado && t.exposicao) {
+                exposicaoValor = t.exposicao;
+                break;
+            }
+        }
 
         let tr = document.createElement("tr");
         tr.innerHTML = `
@@ -287,7 +297,11 @@ function atualizarTabelaCasa() {
                        <label>Ir para exposição</label>`
                 }
             </td>
-            <td><input type="text" placeholder="Nome exposição" disabled></td>
+            <td>
+                <input type="text" placeholder="Nome exposição" value="${exposicaoValor}"
+                    ${temEnviado ? '' : 'disabled'}
+                    onchange="definirExposicaoGrupo('${foto.nome}', this.value)">
+            </td>
             <td>---</td>
             <td><button class="btn" onclick="removerFotoGrupo('${foto.nome}')">🗑</button></td>
         `;
@@ -328,6 +342,21 @@ function marcarEnviado(fid,tid,v){
     }
     atualizarUI();
 }
+
+
+function definirExposicaoGrupo(nomeFoto, valor) {
+    fotos.forEach(foto => {
+        if (foto.nome === nomeFoto) {
+            tamanhos.forEach(t => {
+                if (foto.tamanhos[t.id].disponivel && foto.tamanhos[t.id].enviado) {
+                    foto.tamanhos[t.id].exposicao = valor;
+                }
+            });
+        }
+    });
+    atualizarUI();
+}
+
 
 function definirExposicao(fid,tid,expo){
     const foto = fotos.find(f=>f.id===fid);
