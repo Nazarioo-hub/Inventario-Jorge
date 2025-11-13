@@ -400,13 +400,16 @@ function atualizarTabelaExpo(){
     const expoFiltro = selectExpo.value || "";
     document.getElementById("expoSelecionada").textContent = expoFiltro ? ("Exposição " + expoFiltro) : "";
 
-    // Agrupar fotos pelo id para listar uma linha por foto
+    // Agrupar fotos pelo id
     const grupos = {};
     fotos.forEach(foto => {
-        // Filtrar tamanhos enviados
+        // Filtrar tamanhos enviados e que correspondem à exposição selecionada (se houver filtro)
         const tamanhosEnviados = tamanhos.filter(t => {
-            return foto.tamanhos[t.id].disponivel && foto.tamanhos[t.id].enviado && (expoFiltro === "" || foto.tamanhos[t.id].exposicao === expoFiltro);
+            return foto.tamanhos[t.id].disponivel 
+                && foto.tamanhos[t.id].enviado 
+                && (expoFiltro === "" || foto.tamanhos[t.id].exposicao === expoFiltro);
         });
+
         if (tamanhosEnviados.length > 0) {
             grupos[foto.id] = {
                 foto: foto,
@@ -415,25 +418,25 @@ function atualizarTabelaExpo(){
         }
     });
 
-    // Renderizar cada grupo por linha
+    // Renderizar as linhas agrupadas por foto
     Object.values(grupos).forEach(grupo => {
         const { foto, tamanhos } = grupo;
 
+        // Juntar nomes dos tamanhos numa string
         let tamanhosTexto = tamanhos.map(t => t.nome).join(", ");
 
-        // Para definir se alguma está marcada como risked
+        // Verificar se algum tamanho está marcado como risked (para aplicar classe)
         let riskedAlgum = tamanhos.some(t => foto.tamanhos[t.id].risked);
 
-        // Construir as checkboxes de risked para cada tamanho numa célula separada
+        // Construir checkboxes risked e botões remover para cada tamanho, todos numa linha
         let riskedChecks = tamanhos.map(t => {
             const checked = foto.tamanhos[t.id].risked ? 'checked' : '';
             return `<label class="checklist"><input type="checkbox" ${checked} onchange="marcarRisked('${foto.id}', '${t.id}', this.checked)">${checked ? '✅' : '☐'}</label>`;
         }).join(" ");
 
-        // Botões de remover para cada tamanho separados
-        let removerBotoes = tamanhos.map(t => {
-            return `<button class="btn" title="Remover tamanho ${t.nome}" onclick="removerDaExposicao('${foto.id}','${t.id}')">🗑</button>`;
-        }).join(" ");
+        let removerBotoes = tamanhos.map(t => 
+            `<button class="btn" title="Remover tamanho ${t.nome}" onclick="removerDaExposicao('${foto.id}', '${t.id}')">🗑</button>`
+        ).join(" ");
 
         let tr = document.createElement("tr");
         tr.classList.toggle('risked', riskedAlgum);
