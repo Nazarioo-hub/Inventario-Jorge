@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="pt">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8" />
     <title>Catálogo de Fotos e Exposições</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <style>
         body { font-family: Arial,sans-serif; background: #222; color: #eee; margin:0; }
         header { background: #333; padding: 1em; text-align: center; font-size: 1.6em; }
@@ -15,42 +15,22 @@
         th, td { padding:0.5em; border-bottom:1px solid #444; }
         th { color: #ddd; text-align:left; background: #222;}
         img.thumb { width:60px; height:auto; border-radius:4px; }
-        .area-expo { background:#1B2936; border: 1px solid #465A76; }
-        label.checklist { margin-right:10px; }
         .btn { background:#36a; color:#fff; border:none; padding:0.4em 1em; border-radius:5px; cursor:pointer; margin-right: 8px;}
         .btn:active { filter: brightness(0.85);}
-        input[type="text"], input[type="date"] { background:#333; color:#fff; border:1px solid #555; border-radius:4px; padding:0.4em;}
-        input[type="file"] { color:#fff;}
-        .risked { text-decoration: line-through; color: #c90; }
-        .expo-title { font-size:1.2em; color:#ff8c1a; margin:0.4em 0;}
-        .hidden { display:none;}
+        input[type="text"] { background:#333; color:#fff; border:1px solid #555; border-radius:4px; padding:0.4em;}
+        .modal { display: none; position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.6);
+            align-items: center; justify-content: center; z-index: 1000; }
+        .modal.active { display: flex; }
+        .modal-content { background: #222; padding: 20px; border-radius: 10px; width: 300px; color: #eee; box-sizing: border-box; }
+        .modal-content h3 { margin-top: 0; }
+        label.checklist { margin-bottom: 0.5em; display: block; cursor: pointer; }
     </style>
 </head>
 <body>
 
 <header>Catálogo de Fotos e Exposições</header>
 
-<script>
-  const STORAGE_KEY = "catalogoFotosExpsoicoes";
-
-  let fotos = [];
-
-  function salvarLocalStorage() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(fotos));
-  }
-
-  function carregarLocalStorage() {
-    const data = localStorage.getItem(STORAGE_KEY);
-    if (data) {
-      fotos = JSON.parse(data);
-    } else {
-      fotos = [];
-    }
-  }
-</script>
-
 <main>
-
 <section style="flex-basis:400px;">
     <h2>Adicionar Foto</h2>
     <div class="card">
@@ -59,8 +39,7 @@
                 <input type="text" required id="nomeFoto">
             </label><br><br>
             <label>Imagem da foto (URL ou ficheiro):<br>
-                <input type="file" accept="image/*" id="filePhoto">
-                <br>ou<br>
+                <input type="file" accept="image/*" id="filePhoto"><br>ou<br>
                 <input type="text" placeholder="URL da imagem" id="urlPhoto">
             </label><br><br>
             <label><input type="checkbox" id="tamP"> Pequeno</label>
@@ -69,19 +48,6 @@
             <br><br>
             <button class="btn" type="submit">Adicionar</button>
         </form>
-    </div>
-    <div class="card">
-        <button class="btn" onclick="exportJSON()">Exportar JSON</button>
-        <input type="file" accept="application/json" onchange="importJSON(event)">
-        <br><br>
-        <label>Exportar PDF da exposição:
-            <select id="selectExpoPDF"></select>
-            <button class="btn" onclick="exportPDF()">Exportar PDF</button>
-        </label>
-    </div>
-    <div class="card">
-        <h2>Resumo</h2>
-        <div id="resumoPainel"></div>
     </div>
 </section>
 
@@ -99,79 +65,53 @@
                     <th>Destino</th>
                     <th>Datas</th>
                     <th>Remover</th>
-                    <th>Editar Tamanhos</th> <!-- Novo cabeçalho -->
+                    <th>Editar Tamanhos</th>
                 </tr>
             </thead>
             <tbody></tbody>
         </table>
     </div>
 </section>
-
-
-<section class="area-expo">
-    <h2>Fotos em Exposição</h2>
-    <div class="expo-title" id="expoSelecionada"></div>
-    <div class="card">
-      <button class="btn" onclick="removerSelecionadasDaExposicao()">Apagar Fotos Selecionadas da Exposição</button>
-        <table id="tableExpo">
-            <thead>
-                <tr>
-                    <th>✓ Checklist</th>
-                    <th>Foto</th>
-                    <th>Nome</th>
-                    <th>Tamanho</th>
-                    <th>Exposição</th>
-                    <th>Datas</th>
-                    <th>Remover</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
-    </div>
-</section>
-
 </main>
 
+<!-- Modal para editar tamanhos -->
+<div id="modalEditarTamanhos" class="modal">
+    <div class="modal-content">
+        <h3>Editar Tamanhos da Foto</h3>
+        <div id="checkboxesTamanhos"></div>
+        <div style="margin-top: 1em;">
+            <button class="btn" onclick="fecharModalEditarTamanhos()">Cancelar</button>
+            <button class="btn" onclick="salvarTamanhosEditados()">Salvar</button>
+        </div>
+    </div>
+</div>
 
-
-
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
 const tamanhos = [
-    { id: "p", nome:"Pequeno" },
-    { id: "m", nome:"Médio" },
-    { id: "g", nome:"Grande" }
+    { id: "p", nome: "Pequeno" },
+    { id: "m", nome: "Médio" },
+    { id: "g", nome: "Grande" }
 ];
 
-//let fotos = [];
+let fotos = [];
 
-function novaFotoObj({nome, imageUrl, tamanhosDisponiveis}) {
-    let obj = {
-        id: 'f' + Date.now() + Math.floor(Math.random()*9999),
-        nome,
-        imageUrl,
-        tamanhos: {}
-    };
-    tamanhos.forEach(t=>{
-        obj.tamanhos[t.id] = {
-            disponivel: tamanhosDisponiveis.includes(t.id),
-            enviado: false,
-            exposicao: "",
-            dataInicio: "",
-            dataFim: "",
-            risked: false
-        }
-    });
-    return obj;
+function salvarLocalStorage() {
+    localStorage.setItem("catalogoFotosExpsoicoes", JSON.stringify(fotos));
 }
 
-// Adicionar foto (form)
-document.getElementById('addForm').onsubmit = function(e){
+function carregarLocalStorage() {
+    const data = localStorage.getItem("catalogoFotosExpsoicoes");
+    if (data) {
+        fotos = JSON.parse(data);
+    } else {
+        fotos = [];
+    }
+}
+
+document.getElementById('addForm').onsubmit = function(e) {
     e.preventDefault();
     let nome = document.getElementById('nomeFoto').value.trim();
     let imageUrl = document.getElementById('urlPhoto').value.trim();
-    // Se foi upload de ficheiro
     const fileInput = document.getElementById('filePhoto');
     if(fileInput.files[0]) {
         const reader = new FileReader();
@@ -184,116 +124,64 @@ document.getElementById('addForm').onsubmit = function(e){
     }
 };
 
-
-function atualizarTabelaCasa() {
-    const tb = document.querySelector('#tableCasa tbody');
-    tb.innerHTML = "";
-
-    // Agrupar fotos por nome
-    const grupos = {};
-    fotos.forEach(foto => {
-        if (!grupos[foto.nome]) {
-            grupos[foto.nome] = {
-                fotoGeral: foto,
-                tamanhos: []
-            };
-        }
-        tamanhos.forEach(t => {
-            if (foto.tamanhos[t.id].disponivel) {
-                grupos[foto.nome].tamanhos.push({
-                    id: t.id,
-                    nome: t.nome,
-                    enviado: foto.tamanhos[t.id].enviado,
-                    exposicao: foto.tamanhos[t.id].exposicao
-                });
-            }
-        });
+function novaFotoObj({nome, imageUrl, tamanhosDisponiveis}) {
+    let obj = {
+        id: 'f' + Date.now() + Math.floor(Math.random()*9999),
+        nome,
+        imageUrl,
+        tamanhos: {}
+    };
+    tamanhos.forEach(t => {
+        obj.tamanhos[t.id] = {
+            disponivel: tamanhosDisponiveis.includes(t.id),
+            enviado: false,
+            exposicao: "",
+            dataInicio: "",
+            dataFim: "",
+            risked: false
+        };
     });
-
-    Object.values(grupos).forEach(grupo => {
-        const foto = grupo.fotoGeral;
-        const tamanhosDisponiveis = grupo.tamanhos.map(t => t.enviado ? `${t.nome} (em exposição)` : t.nome);
-
-        if (tamanhosDisponiveis.length === 0) return;
-
-        const temEnviado = grupo.tamanhos.some(t => t.enviado);
-
-        let exposicaoValor = "";
-        for (let t of grupo.tamanhos) {
-            if (t.enviado && t.exposicao) {
-                exposicaoValor = t.exposicao;
-                break;
-            }
-        }
-
-        let tr = document.createElement("tr");
-        tr.innerHTML = `
-            <td><img class="thumb" src="${foto.imageUrl}"></td>
-            <td>${foto.nome}</td>
-            <td>${tamanhosDisponiveis.join(", ")}</td>
-            <td>
-                ${temEnviado
-                    ? "Indisponível (em exposição)"
-                    : `<input type="checkbox" onchange="marcarEnviadoGrupo('${foto.nome}', this.checked)">
-                       <label>Ir para exposição</label>`
-                }
-            </td>
-            <td>
-                <input type="text" placeholder="Nome exposição" value="${exposicaoValor}"
-                    ${temEnviado ? '' : 'disabled'}
-                    onchange="definirExposicaoGrupo('${foto.nome}', this.value)">
-            </td>
-            <td>---</td>
-            <td><button class="btn" onclick="removerFotoGrupo('${foto.nome}')">🗑</button></td>
-            <td><button class="btn" onclick="abrirEditorTamanhos('${foto.nome}')">Editar Tamanhos</button></td> <!-- Botão novo -->
-        `;
-        tb.appendChild(tr);
-    });
+    return obj;
 }
 
-// Exemplo simples de função para abrir editor dos tamanhos (melhore para modal visual)
-function abrirEditorTamanhos(nomeFoto) {
-    const fotosEditar = fotos.filter(foto => foto.nome === nomeFoto);
+function inserirFoto(nome, imageUrl){
+    let tam = [];
+    if(document.getElementById('tamP').checked) tam.push("p");
+    if(document.getElementById('tamM').checked) tam.push("m");
+    if(document.getElementById('tamG').checked) tam.push("g");
 
-    fotosEditar.forEach(foto => {
-        let mensagem = `Editar tamanhos para a foto: "${foto.nome}".\nDesmarque para remover o tamanho.`;
-        tamanhos.forEach(t => {
-            const atual = foto.tamanhos[t.id].disponivel;
-            const resposta = confirm(`${mensagem}\nManter tamanho ${t.nome}?${atual ? " (Ativo)" : " (Inactive)"}`);
-            if (!resposta) {
-                foto.tamanhos[t.id].disponivel = false;
-                foto.tamanhos[t.id].enviado = false;
-                foto.tamanhos[t.id].exposicao = "";
-                foto.tamanhos[t.id].dataInicio = "";
-                foto.tamanhos[t.id].dataFim = "";
-                foto.tamanhos[t.id].risked = false;
-            } else {
-                foto.tamanhos[t.id].disponivel = true;
-            }
-        });
-    });
+    if(!nome || !imageUrl || tam.length === 0) {
+        alert("Preencha todos os campos (nome, imagem e tamanhos)!");
+        return;
+    }
+
+    fotos.push(novaFotoObj({nome, imageUrl, tamanhosDisponiveis: tam}));
+
+    document.getElementById('nomeFoto').value = "";
+    document.getElementById('urlPhoto').value = "";
+    document.getElementById('filePhoto').value = "";
+    document.getElementById('tamP').checked = false;
+    document.getElementById('tamM').checked = false;
+    document.getElementById('tamG').checked = false;
 
     atualizarUI();
 }
 
-
-
-
-function apagarTodasFotos() {
-    if(confirm("Tem a certexa que deseja apagar todas as fotos em casa?")) {
+function apagarTodasFotos(){
+    if(confirm("Tem a certeza que deseja apagar todas as fotos em casa?")){
         fotos = [];
         salvarLocalStorage();
         atualizarUI();
     }
 }
 
-function marcarEnviadoGrupo(nomeFoto, valor) {
+function marcarEnviadoGrupo(nomeFoto, valor){
     fotos.forEach(foto => {
-        if (foto.nome === nomeFoto) {
+        if(foto.nome === nomeFoto){
             tamanhos.forEach(t => {
-                if (foto.tamanhos[t.id].disponivel) {
+                if(foto.tamanhos[t.id].disponivel){
                     foto.tamanhos[t.id].enviado = valor;
-                    if (!valor) {
+                    if(!valor){
                         foto.tamanhos[t.id].exposicao = "";
                         foto.tamanhos[t.id].dataInicio = "";
                         foto.tamanhos[t.id].dataFim = "";
@@ -306,52 +194,38 @@ function marcarEnviadoGrupo(nomeFoto, valor) {
     atualizarUI();
 }
 
-
-
-
-function inserirFoto(nome, imageUrl) {
-    let tam = [];
-    if(document.getElementById('tamP').checked) tam.push("p");
-    if(document.getElementById('tamM').checked) tam.push("m");
-    if(document.getElementById('tamG').checked) tam.push("g");
-    if(!nome || !imageUrl || tam.length===0) {
-        alert("Preencha todos os campos (nome, imagem e tamanhos)!");
-        return;
-    }
-    fotos.push(novaFotoObj({nome,imageUrl,tamanhosDisponiveis:tam}));
-    document.getElementById('nomeFoto').value="";
-    document.getElementById('urlPhoto').value="";
-    document.getElementById('filePhoto').value="";
-    document.getElementById('tamP').checked=false;
-    document.getElementById('tamM').checked=false;
-    document.getElementById('tamG').checked=false;
+function definirExposicaoGrupo(nomeFoto, valor) {
+    fotos.forEach(foto => {
+        if(foto.nome === nomeFoto){
+            tamanhos.forEach(t => {
+                if(foto.tamanhos[t.id].disponivel && foto.tamanhos[t.id].enviado){
+                    foto.tamanhos[t.id].exposicao = valor;
+                }
+            });
+        }
+    });
     atualizarUI();
 }
 
-// Atualizar interface
-function atualizarUI(){
-    salvarLocalStorage();
-    atualizarTabelaCasa();
-    atualizarTabelaExpo();
-    atualizarResumo();
-    atualizarExpoPDF();
+function removerFotoGrupo(nomeFoto) {
+    fotos = fotos.filter(foto => foto.nome !== nomeFoto);
+    atualizarUI();
 }
 
 function atualizarTabelaCasa() {
     const tb = document.querySelector('#tableCasa tbody');
     tb.innerHTML = "";
 
-    // Agrupar fotos por nome
     const grupos = {};
     fotos.forEach(foto => {
-        if (!grupos[foto.nome]) {
+        if(!grupos[foto.nome]){
             grupos[foto.nome] = {
                 fotoGeral: foto,
                 tamanhos: []
             };
         }
         tamanhos.forEach(t => {
-            if (foto.tamanhos[t.id].disponivel) {
+            if(foto.tamanhos[t.id].disponivel){
                 grupos[foto.nome].tamanhos.push({
                     id: t.id,
                     nome: t.nome,
@@ -362,19 +236,17 @@ function atualizarTabelaCasa() {
         });
     });
 
-
-    // Renderizar cada grupo como uma linha
     Object.values(grupos).forEach(grupo => {
         const foto = grupo.fotoGeral;
         const tamanhosDisponiveis = grupo.tamanhos.map(t => t.enviado ? `${t.nome} (em exposição)` : t.nome);
 
-        if (tamanhosDisponiveis.length === 0) return;
+        if(tamanhosDisponiveis.length === 0) return;
 
         const temEnviado = grupo.tamanhos.some(t => t.enviado);
 
         let exposicaoValor = "";
-        for (let t of grupo.tamanhos) {
-            if (t.enviado && t.exposicao) {
+        for(let t of grupo.tamanhos){
+            if(t.enviado && t.exposicao){
                 exposicaoValor = t.exposicao;
                 break;
             }
@@ -394,7 +266,7 @@ function atualizarTabelaCasa() {
             </td>
             <td>
                 <input type="text" placeholder="Nome exposição" value="${exposicaoValor}"
-                    ${temEnviado ? '' : 'disabled'}
+                    ${temEnviado ? "" : "disabled"}
                     onchange="definirExposicaoGrupo('${foto.nome}', this.value)">
             </td>
             <td>---</td>
@@ -405,295 +277,64 @@ function atualizarTabelaCasa() {
     });
 }
 
+// Modal editar tamanhos
+let fotoEditando = null;
 
+function abrirEditorTamanhos(nomeFoto){
+    fotoEditando = fotos.find(foto => foto.nome === nomeFoto);
+    if(!fotoEditando) return;
 
-/*function marcarEnviadoFoto(fid, valor) {
-    const fot = fotos.find( f => f.id === fid);
-    if(!foto) return;
+    const container = document.getElementById("checkboxesTamanhos");
+    container.innerHTML = "";
+
     tamanhos.forEach(t => {
-        if(foto.tamanhos[t.id].disponivel){
-            foto.tamanhos[t.id].enviado = valor;
-            if(!valor){
-                foto.tamanhos[t.id].exposicao = "";
-                foto.tamanhos[t.id].dataInicio = "";
-                foto.tamanhos[t.id].dataFim = "";
-                foto.tamanhos[t.id].risked = false;
+        const disponivel = fotoEditando.tamanhos[t.id].disponivel;
+        const label = document.createElement("label");
+        label.className = "checklist";
+        label.innerHTML = `<input type="checkbox" id="tamEdit_${t.id}" ${disponivel ? "checked" : ""}> ${t.nome}`;
+        container.appendChild(label);
+    });
+
+    document.getElementById("modalEditarTamanhos").classList.add("active");
+}
+
+function fecharModalEditarTamanhos(){
+    document.getElementById("modalEditarTamanhos").classList.remove("active");
+    fotoEditando = null;
+}
+
+function salvarTamanhosEditados(){
+    if(!fotoEditando) return;
+
+    tamanhos.forEach(t=>{
+        const checkbox = document.getElementById(`tamEdit_${t.id}`);
+        const marcado = checkbox.checked;
+        const tamObj = fotoEditando.tamanhos[t.id];
+        if(tamObj.disponivel !== marcado){
+            tamObj.disponivel = marcado;
+            if(!marcado){
+                tamObj.enviado = false;
+                tamObj.exposicao = "";
+                tamObj.dataInicio = "";
+                tamObj.dataFim = "";
+                tamObj.risked = false;
             }
         }
     });
-    atualizarUI();
-}*/
 
-
-
-// Marcar foto/tamanho como enviado
-function marcarEnviado(fid,tid,v){
-    const foto = fotos.find(f=> f.id === fid);
-    if(!foto) return;
-    foto.tamanhos[tid].enviado = v;
-    if(!v){
-        foto.tamanhos[tid].exposicao = "";
-        foto.tamanhos[tid].dataInicio = "";
-        foto.tamanhos[tid].dataFim = "";
-        foto.tamanhos[tid].risked = false;
-    }
+    fecharModalEditarTamanhos();
     atualizarUI();
 }
 
-
-function definirExposicaoGrupo(nomeFoto, valor) {
-    fotos.forEach(foto => {
-        if (foto.nome === nomeFoto) {
-            tamanhos.forEach(t => {
-                if (foto.tamanhos[t.id].disponivel && foto.tamanhos[t.id].enviado) {
-                    foto.tamanhos[t.id].exposicao = valor;
-                }
-            });
-        }
-    });
-    atualizarUI();
+function atualizarUI(){
+    salvarLocalStorage();
+    atualizarTabelaCasa();
+    // Coloque aqui chamadas para atualizar outras tabelas e resumos se desejar
 }
 
-
-function definirExposicao(fid,tid,expo){
-    const foto = fotos.find(f=>f.id===fid);
-    if(!foto) return;
-    foto.tamanhos[tid].exposicao = expo;
-    atualizarUI();
-}
-
-function definirData(fid,tid,qual,data){
-    const foto = fotos.find(f=>f.id===fid);
-    if(!foto) return;
-    if(qual==="inicio") foto.tamanhos[tid].dataInicio = data;
-    if(qual==="fim") foto.tamanhos[tid].dataFim = data;
-    atualizarUI();
-}
-
-function removerSelecionadasDaExposicao(){
-    fotos.forEach(foto=>{
-        tamanhos.forEach(tam=>{
-            let dt = foto.tamanhos[tam.id];
-            if(dt.enviado && dt.risked){
-                // Remove da exposição sem apagar do inventário
-                dt.enviado = false;
-                dt.exposicao = "";
-                dt.dataInicio = "";
-                dt.dataFim = "";
-                dt.risked = false;
-            }
-        });
-    });
-    atualizarUI();
-}
-
-
-
-// Tabela de exposição
-function atualizarTabelaExpo(){
-    const tb = document.querySelector('#tableExpo tbody');
-    tb.innerHTML = "";
-    const selectExpo = document.getElementById("selectExpoPDF");
-    const expoFiltro = selectExpo.value || "";
-    document.getElementById("expoSelecionada").textContent = expoFiltro ? ("Exposição " + expoFiltro) : "";
-
-    // Agrupar fotos pelo id para listar uma linha por foto
-    const grupos = {};
-    fotos.forEach(foto => {
-        // Filtrar tamanhos enviados e com o filtro da exposição atual
-        const tamanhosEnviados = tamanhos.filter(t => {
-            return foto.tamanhos[t.id].disponivel
-                && foto.tamanhos[t.id].enviado
-                && (expoFiltro === "" || foto.tamanhos[t.id].exposicao === expoFiltro);
-        });
-        if (tamanhosEnviados.length > 0) {
-            grupos[foto.id] = {
-                foto: foto,
-                tamanhos: tamanhosEnviados
-            };
-        }
-    });
-
-    // Renderizar cada grupo em uma única linha
-    Object.values(grupos).forEach(grupo => {
-        const { foto, tamanhos } = grupo;
-
-        const tamanhosTexto = tamanhos.map(t => t.nome).join(", ");
-
-        // Verifica se algum tamanho marcado como risked para aplicar destaque
-        const riskedAlgum = tamanhos.some(t => foto.tamanhos[t.id].risked);
-
-        // Monta as checkboxes risked por tamanho
-        const riskedChecks = tamanhos.map(t => {
-            const checked = foto.tamanhos[t.id].risked ? 'checked' : '';
-            return `<label class="checklist"><input type="checkbox" ${checked} onchange="marcarRisked('${foto.id}', '${t.id}', this.checked)">${checked ? '✅' : '☐'}</label>`;
-        }).join(" ");
-
-        // Botões para remover cada tamanho individual
-        const removerBotoes = tamanhos.map(t => 
-            `<button class="btn" title="Remover tamanho ${t.nome}" onclick="removerDaExposicao('${foto.id}', '${t.id}')">🗑</button>`
-        ).join(" ");
-
-        const tr = document.createElement("tr");
-        tr.classList.toggle('risked', riskedAlgum);
-        tr.innerHTML = `
-            <td>${riskedChecks}</td>
-            <td><img class="thumb" src="${foto.imageUrl}"></td>
-            <td>${foto.nome}</td>
-            <td>${tamanhosTexto}</td>
-            <td>${expoFiltro}</td>
-            <td>
-                <span>De:</span> ${tamanhos.map(t => foto.tamanhos[t.id].dataInicio).join(", ")}<br>
-                <span>Até:</span> ${tamanhos.map(t => foto.tamanhos[t.id].dataFim).join(", ")}
-            </td>
-            <td>${removerBotoes}</td>
-        `;
-        tb.appendChild(tr);
-    });
-}
-
-
-
-// Marcar como risked (checklist visual)
-function marcarRisked(fid,tid,r){
-    const foto = fotos.find(f=>f.id===fid);
-    if(!foto) return;
-    foto.tamanhos[tid].risked = r;
-    atualizarUI();
-}
-
-// Remover foto
-function removerFoto(fid){
-    fotos = fotos.filter(f=>f.id!==fid);
-    atualizarUI();
-}
-
-function removerDaExposicao(fid, tid){
-  const foto = fotos.find(f => f.id === fid);
-  if (!foto) return;
-  foto.tamanhos[tid].enviado = false;
-  foto.tamanhos[tid].exposicao = "";
-  foto.tamanhos[tid].dataInicio = "";
-  foto.tamanhos[tid].dataFim = "";
-  foto.tamanhos[tid].risked = false;
-  atualizarUI();
-}
-
-// Painel resumo
-function atualizarResumo(){
-    let total = fotos.length;
-    let disp = { p:0, m:0, g:0 }, envio = { p:0, m:0, g:0 }, exps = {};
-    fotos.forEach(foto=>{
-        tamanhos.forEach(t=>{
-            let dt = foto.tamanhos[t.id];
-            if(dt.disponivel) disp[t.id]++;
-            if(dt.disponivel && dt.enviado){
-                envio[t.id]++;
-                if(dt.exposicao)
-                    exps[dt.exposicao] = (exps[dt.exposicao]||0)+1;
-            }
-        });
-    });
-    let html = `
-        <b>Total de fotos:</b> ${total}<br>
-        <b>Disponíveis:</b>
-        Pequeno: ${disp.p},
-        Médio: ${disp.m},
-        Grande: ${disp.g} <br>
-        <b>Enviados:</b>
-        Pequeno: ${envio.p},
-        Médio: ${envio.m},
-        Grande: ${envio.g}
-        <br>
-        <b>Exposições:</b>
-        <ul>
-    `;
-    Object.keys(exps).forEach(k=>{
-        html += `<li>${k}: ${exps[k]} fotos</li>`;
-    });
-    html += "</ul>";
-    document.getElementById('resumoPainel').innerHTML = html;
-}
-
-// Exportar JSON
-function exportJSON(){
-    const dataStr = JSON.stringify(fotos, null, 4);
-    const blob = new Blob([dataStr], {type: "application/json"});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "fotos-exposicoes.json";
-    document.body.appendChild(a);
-    a.click();
-    setTimeout(()=>document.body.removeChild(a),1000);
-}
-
-// Importar JSON
-function importJSON(event){
-    const file = event.target.files[0];
-    if(!file) return;
-    const reader = new FileReader();
-    reader.onload = function(e){
-        fotos = JSON.parse(e.target.result);
-        atualizarUI();
-    }
-    reader.readAsText(file);
-}
-
-// Exportar PDF
-function atualizarExpoPDF(){
-    // Popular select com exposições disponíveis
-    const select = document.getElementById('selectExpoPDF');
-    let exps = {};
-    fotos.forEach(foto=>{
-        tamanhos.forEach(t=>{
-            const dt = foto.tamanhos[t.id];
-            if(dt.disponivel && dt.enviado && dt.exposicao){
-                exps[dt.exposicao]=1;
-            }
-        });
-    });
-    select.innerHTML = '<option value=""></option>';
-    Object.keys(exps).forEach(k=>{
-        let opt = document.createElement("option");
-        opt.value = k;
-        opt.text = k;
-        select.appendChild(opt);
-    });
-}
-function exportPDF() {
-    const expo = document.getElementById("selectExpoPDF").value;
-    if(!expo) { alert("Selecione uma exposição para exportar!"); return; }
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-    let y = 10;
-    doc.setFontSize(16);
-    doc.text(`Fotos para exposição: ${expo}`,10,y);
-    y+=10;
-    fotos.forEach(foto=>{
-        tamanhos.forEach(t=>{
-            const dt = foto.tamanhos[t.id];
-            if(dt.disponivel && dt.enviado && dt.exposicao===expo){
-                // Adiciona imagem (base64, será pequena)
-                if (foto.imageUrl.startsWith("data")) {
-                    doc.addImage(foto.imageUrl, "JPEG", 10, y, 30, 30);
-                }
-                doc.setFontSize(10);
-                doc.text(`Nome: ${foto.nome}`,45,y+7);
-                doc.text(`Tamanho: ${t.nome}`,45,y+14);
-                doc.text(`De: ${dt.dataInicio}   Até: ${dt.dataFim}`,45,y+21);
-                y+=35;
-                if(y>270) { doc.addPage(); y=10;}
-            }
-        });
-    });
-    doc.save(`exposicao_${expo}.pdf`);
-}
-
-// Inicialização
 carregarLocalStorage();
 atualizarUI();
-
 </script>
+
 </body>
 </html>
