@@ -213,41 +213,55 @@ function atualizarTabelaCasa(){
     const tb = document.querySelector('#tableCasa tbody');
     tb.innerHTML = "";
     fotos.forEach(foto=>{
-        tamanhos.forEach(tam=>{
-            let dt = foto.tamanhos[tam.id];
-            if(dt.disponivel){
-                let tr = document.createElement("tr");
-                tr.innerHTML = `
-                    <td><img class="thumb" src="${foto.imageUrl}"></td>
-                    <td>${foto.nome}</td>
-                    <td>${tam.nome}</td>
-                    <td>
-                        ${dt.enviado
-                            ? "Indisponível (em exposição)"
-                            : `<input type="checkbox" onchange="marcarEnviado('${foto.id}','${tam.id}',this.checked)">
-                               <label>Ir para exposição</label>`
-                        }
-                    </td>
-                    <td>
-                        <input type="text" placeholder="Nome exposição" value="${dt.exposicao}" onchange="definirExposicao('${foto.id}','${tam.id}',this.value)" ${dt.enviado ? "disabled" : ""}>
-                    </td>
-                    <td>
-                        <span>De:</span>
-                        <input type="date" value="${dt.dataInicio}" onchange="definirData('${foto.id}','${tam.id}','inicio',this.value)" ${dt.enviado ? "disabled" : ""}>
-                        <span>Até:</span>
-                        <input type="date" value="${dt.dataFim}" onchange="definirData('${foto.id}','${tam.id}','fim',this.value)" ${dt.enviado ? "disabled" : ""}>
-                    </td>
-                    <td>
-                        <button class="btn" onclick="removerFoto('${foto.id}')">🗑</button>
-                    </td>
-                `;
-                tb.appendChild(tr);
-                
-            }
-        });
+        // encontrar tamanhos disponíveis (nome) que estão selecionados (disponível true)
+        let tamanhosDisponiveis = tamanhos
+            .filter(t => foto.tamanhos[t.id].disponivel)
+            .map(t => {
+                let dt = foto.tamanhos[t.id];
+                return dt.enviado ? `${t.nome} (em exposição)` : t.nome;
+            });
+        // Se não tiver nenhum tamanho disponível, pular
+        if (tamanhosDisponiveis.length === 0) return;
+
+        // Verifica se algum tamanho já está enviado para controle do checkbox
+        let temEnviado = tamanhos.some(t=> foto.tamanhos[t.id].enviado);
+
+        let tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td><img class="thumb" src="${foto.imageUrl}"></td>
+            <td>${foto.nome}</td>
+            <td>${tamanhosDisponiveis.join(", ")}</td>
+            <td>
+                ${temEnviado
+                    ? "Indisponível (em exposição)"
+                    : `<input type="checkbox" onchange="marcarEnviadoFoto('${foto.id}', this.checked)">
+                    <label>Ir para exposição</label>`
+                }
+            </td>
+            <td><input type="text" placeholder="Nome exposição" value="" disabled></td>
+            <td>---</td>
+            <td><button class="btn" onclick="removerFoto('${foto.id}')">🗑</button></td>
+        `;
+        tb.appendChild(tr);
     });
 }
 
+function marcarEnviadoFoto(fid, valor) {
+    const fot = fotos.find( f => f.id === fid);
+    if(!foto) return;
+    tamanhos.forEach(t => {
+        if(foto.tamanhos[t.id].disponivel){
+            foto.tamanhos[t.id].enviado = valor;
+            if(!valor){
+                foto.tamanhos[t.id].exposicao = "";
+                foto.tamanhos[t.id].dataInicio = "";
+                foto.tamanhos[t.id].dataFim = "";
+                foto.tamanhos[t.id].risked = false;
+            }
+        }
+    });
+    atualizarUI();
+}
 
 
 
