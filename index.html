@@ -245,6 +245,7 @@ function atualizarTabelaCasa(){
 }
 
 
+
 // Marcar foto/tamanho como enviado
 function marcarEnviado(fid,tid,v){
     const foto = fotos.find(f=>f.id===fid);
@@ -278,7 +279,6 @@ function definirData(fid,tid,qual,data){
 function atualizarTabelaExpo(){
     const tb = document.querySelector('#tableExpo tbody');
     tb.innerHTML = "";
-    // área de filtro por exposição selecionada
     const selectExpo = document.getElementById("selectExpoPDF");
     const expoFiltro = selectExpo.value || "";
     document.getElementById("expoSelecionada").textContent = expoFiltro?("Exposição "+expoFiltro):"";
@@ -300,7 +300,7 @@ function atualizarTabelaExpo(){
                             <span>De:</span> <span>${dt.dataInicio}</span>
                             <span>Até:</span> <span>${dt.dataFim}</span>
                         </td>
-                        <td><button class="btn" onclick="removerFoto('${foto.id}')">🗑</button></td>
+                        <td><button class="btn" onclick="removerDaExposicao('${foto.id}','${tam.id}')">🗑</button></td>
                     `;
                     if(dt.risked) tr.classList.add('risked');
                     tb.appendChild(tr);
@@ -322,6 +322,16 @@ function marcarRisked(fid,tid,r){
 function removerFoto(fid){
     fotos = fotos.filter(f=>f.id!==fid);
     atualizarUI();
+}
+
+function removerDaExposicao(fid, tid){
+  const foto = fotos.find(f => f.id === fid);
+  if (!foto) return;
+  foto.tamanhos[tid].enviado = false;
+  foto.tamanhos[tid].exposicao = "";
+  foto.tamanhos[tid].dataInicio = "";
+  foto.tamanhos[tid].dataFim = "";
+  foto.tamanhos[tid].risked = false;
 }
 
 // Painel resumo
