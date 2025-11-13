@@ -275,6 +275,25 @@ function definirData(fid,tid,qual,data){
     atualizarUI();
 }
 
+function removerSelecionadasDaExposicao(){
+    fotos.forEach(foto=>{
+        tamanhos.forEach(tam=>{
+            let dt = foto.tamanhos[tam.id];
+            if(dt.enviado && dt.risked){
+                // Remove da exposição sem apagar do inventário
+                dt.enviado = false;
+                dt.exposicao = "";
+                dt.dataInicio = "";
+                dt.dataFim = "";
+                dt.risked = false;
+            }
+        });
+    });
+    atualizarUI();
+}
+
+
+<button class="btn" onclick="removerSelecionadasDaExposicao()">Apagar Fotos Selecionadas da Exposição</button>
 // Tabela de exposição
 function atualizarTabelaExpo(){
     const tb = document.querySelector('#tableExpo tbody');
