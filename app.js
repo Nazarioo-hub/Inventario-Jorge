@@ -54,6 +54,9 @@ let currentTheme = 0;
 
 // Initialize app
 function init() {
+  photos = loadPhotosFromStorage();
+  currentTheme = loadThemeFromStorage();
+  applyTheme(currentTheme);
   renderPhotos();
   updateStats();
   renderThemeSelector();
@@ -128,6 +131,7 @@ function addPhoto(event) {
     };
     
     photos.push(photo);
+    savePhotosToStorage();
     renderPhotos();
     updateStats();
     closeAddPhotoModal();
@@ -139,6 +143,7 @@ function addPhoto(event) {
 function deletePhoto(id) {
   if (confirm('Tem certeza que deseja eliminar esta foto?')) {
     photos = photos.filter(p => p.id !== id);
+    savePhotosToStorage();
     renderPhotos();
     updateStats();
     showNotification('🗑️ Foto eliminada', 'info');
@@ -179,6 +184,7 @@ function setExhibition(event) {
       notified: false
     };
     photo.location = 'Exposição';
+    savePhotosToStorage();
     renderPhotos();
     updateStats();
     closeExhibitionModal();
@@ -191,6 +197,7 @@ function returnToHome(id) {
   if (photo) {
     photo.location = 'Casa';
     photo.exhibition = null;
+    savePhotosToStorage();
     renderPhotos();
     updateStats();
     showNotification('🏠 Foto retornou para Casa', 'info');
@@ -306,6 +313,7 @@ function renderThemeSelector() {
 
 function applyTheme(index) {
   currentTheme = index;
+  saveThemeToStorage();
   const theme = themes[index];
   const root = document.documentElement;
   
@@ -375,6 +383,7 @@ function importData(event) {
       const data = JSON.parse(e.target.result);
       if (data.photos && Array.isArray(data.photos)) {
         photos = data.photos;
+        savePhotosToStorage();
         renderPhotos();
         updateStats();
         closeImportModal();
@@ -389,6 +398,25 @@ function importData(event) {
   };
   reader.readAsText(file);
 }
+
+
+function savePhotosToStorage(){
+  localStorage.setItem('photos', JSON.stringify(photos));
+}
+
+function loadPhotosFromStorage() {
+  const data = localStorage.getItem('photos');
+}
+
+function saveThemeToStorage() {
+  localStorage.setItem('currentTheme', currentTheme);
+}
+
+function loadThemeFromStorage(){
+  const value = localStorage.getItem('currentTheme');
+  return value !== null ? parseInt(value, 10) : 0;
+}
+
 
 // PDF Export
 function exportExhibitionPDF() {
