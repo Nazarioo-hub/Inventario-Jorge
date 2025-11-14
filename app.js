@@ -414,6 +414,7 @@ function savePhotosToStorage(){
 
 function loadPhotosFromStorage() {
   const data = localStorage.getItem('photos');
+  return data ? JSON.parse(data) : [];
 }
 
 function saveThemeToStorage() {
