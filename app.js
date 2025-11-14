@@ -313,7 +313,7 @@ function renderThemeSelector() {
 
 function applyTheme(index) {
   currentTheme = index;
-  saveThemeToStorage();
+  saveThemeToStorage();dd
   const theme = themes[index];
   const root = document.documentElement;
   
