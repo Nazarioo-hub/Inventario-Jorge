@@ -427,6 +427,31 @@ function loadThemeFromStorage(){
 }
 
 
+
+async function backupToDropbox() {
+  const ACCESS_TOKEN = 'SEU_ACCESS_TOKEN_AQUI';
+  const dbx = new Dropbox.Dropbox({ accessToken: ACCESS_TOKEN });
+  
+  const data = localStorage.getItem('photos') || '[]';
+  const path = '/backup-inventario-fotos.json';
+
+  try {
+    await dbx.filesUpload({
+      path: path,
+      contents: data,
+      mode: 'overwrite'
+    });
+    showNotification('✔ Backup enviado ao Dropbox com sucesso!', 'success');
+  } catch (error) {
+    console.error('Erro ao enviar backup Dropbox:', error);
+    showNotification('❌ Falha ao enviar backup para Dropbox.', 'error');
+  }
+}
+
+
+
+
+
 // PDF Export
 function exportExhibitionPDF() {
   closeMenu();
