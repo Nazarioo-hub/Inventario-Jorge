@@ -313,22 +313,30 @@ function renderThemeSelector() {
 
 function applyTheme(index) {
   currentTheme = index;
-  saveThemeToStorage();dd
+  saveThemeToStorage();
   const theme = themes[index];
   const root = document.documentElement;
-  
+
   Object.keys(theme.colors).forEach(key => {
     root.style.setProperty(`--${key}`, theme.colors[key]);
   });
-  
-  // Update shadow and border based on theme brightness
+
+  // Atualizar sombra e borda
   const isDark = theme.name.includes('Escuro');
   root.style.setProperty('--shadow', isDark ? 'rgba(0, 0, 0, 0.3)' : 'rgba(0, 0, 0, 0.1)');
   root.style.setProperty('--border', isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)');
-  
+
+  // Adiciona ou remove classe no body para tema escuro
+  if (isDark) {
+    document.body.classList.add('dark-theme');
+  } else {
+    document.body.classList.remove('dark-theme');
+  }
+
   renderThemeSelector();
   showNotification(`🎨 Tema alterado para: ${theme.name}`, 'info');
 }
+
 
 function openThemeModal() {
   closeMenu();
