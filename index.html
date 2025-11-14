@@ -1,651 +1,740 @@
 <!DOCTYPE html>
 <html lang="pt">
 <head>
-<meta charset="UTF-8" />
-<title>Catálogo de Fotos e Exposições</title>
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<style>
-  body {
-  font-family: Arial, sans-serif;
-  background: #222;
-  color: #eee;
-  margin: 0;
-  padding: 10px;
-}
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inventário de Fotos</title>
+  <style>
+    :root {
+      --primary: #2C3E50;
+      --secondary: #3498DB;
+      --background: #ECF0F1;
+      --surface: #FFFFFF;
+      --text: #2C3E50;
+      --accent: #E74C3C;
+      --shadow: rgba(0, 0, 0, 0.1);
+      --border: rgba(0, 0, 0, 0.1);
+    }
 
-header {
-  background: #333;
-  padding: 1em;
-  text-align: center;
-  font-size: 1.4em;
-  word-break: break-word;
-}
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-main {
-  display: flex;
-  flex-wrap: wrap;
-  margin: 0 -0.5em;
-  gap: 10px;
-}
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: var(--background);
+      color: var(--text);
+      transition: background-color 0.3s ease;
+    }
 
-section {
-  flex: 1 1 300px;
-  min-width: 280px;
-  padding: 0.5em 0.5em 1em;
-  box-sizing: border-box;
-  max-width: 100%;
-}
+    .header {
+      background-color: var(--primary);
+      color: white;
+      padding: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 8px var(--shadow);
+    }
 
-h2 {
-  margin-top: 0;
-  color: #36a;
-  font-size: 1.2rem;
-}
+    .menu-btn {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 1.5rem;
+      cursor: pointer;
+      padding: 0.5rem;
+      border-radius: 4px;
+      transition: background-color 0.2s;
+    }
 
-.card {
-  background: #2a2a2a;
-  padding: 1em;
-  margin: 1em 0;
-  border-radius: 8px;
-  word-break: break-word;
-}
+    .menu-btn:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+    }
 
-/* Adicione um wrapper com overflow-x para as tabelas */
-.table-wrapper {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch; /* para suavizar scroll no iOS */
-}
+    .header-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+    }
 
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-bottom: 1em;
-  font-size: 0.4rem;
-  /* Usa largura fixa para colunas, ajuda com overflow */
-  table-layout: auto;
-}
+    .side-menu {
+      position: fixed;
+      top: 0;
+      left: -300px;
+      width: 280px;
+      height: 100vh;
+      background-color: var(--surface);
+      box-shadow: 2px 0 8px var(--shadow);
+      transition: left 0.3s ease;
+      z-index: 200;
+      overflow-y: auto;
+    }
 
-th, td {
-  padding: 0.4em;
-  border-bottom: 1px solid #444;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  vertical-align: middle;
-}
+    .side-menu.open {
+      left: 0;
+    }
 
-th {
-  color: #ddd;
-  text-align: left;
-  background: #222;
-}
+    .menu-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100vh;
+      background-color: rgba(0, 0, 0, 0.5);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+      z-index: 150;
+    }
 
-img.thumb {
-  width: 45px;
-  height: auto;
-  border-radius: 4px;
-}
+    .menu-overlay.active {
+      opacity: 1;
+      pointer-events: all;
+    }
 
-.btn {
-  background: #36a;
-  color: #fff;
-  border: none;
-  padding: 0.3em 0.8em;
-  border-radius: 5px;
-  cursor: pointer;
-  margin-right: 6px;
-  font-size: 0.85rem;
-  white-space: nowrap;
-}
+    .menu-header {
+      background-color: var(--primary);
+      color: white;
+      padding: 1.5rem 1rem;
+      font-weight: 600;
+      font-size: 1.1rem;
+    }
 
-.btn:active {
-  filter: brightness(0.85);
-}
+    .menu-items {
+      padding: 1rem 0;
+    }
 
-input[type="text"], input[type="date"] {
-  background: #333;
-  color: #fff;
-  border: 1px solid #555;
-  border-radius: 4px;
-  padding: 0.35em;
-  font-size: 0.85rem;
-  width: 100%;
-  box-sizing: border-box;
-}
+    .menu-item {
+      padding: 1rem 1.5rem;
+      cursor: pointer;
+      transition: background-color 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      color: var(--text);
+    }
 
-label.checklist {
-  margin-right: 10px;
-  font-size: 0.95rem;
-  cursor: pointer;
-}
+    .menu-item:hover {
+      background-color: rgba(0, 0, 0, 0.05);
+    }
 
-.area-expo {
-  background: #1b2936;
-  border: 1px solid #465a76;
-}
+    .menu-item-icon {
+      font-size: 1.2rem;
+    }
 
-.risked {
-  text-decoration: line-through;
-  color: #c90;
-}
+    .notification {
+      background-color: #FFF3CD;
+      border: 1px solid #FFECB5;
+      color: #856404;
+      padding: 1rem;
+      margin: 1rem;
+      border-radius: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 4px var(--shadow);
+      animation: slideDown 0.3s ease;
+    }
 
-.expo-title {
-  font-size: 1.2em;
-  color: #ff8c1a;
-  margin: 0.4em 0;
-}
+    @keyframes slideDown {
+      from {
+        transform: translateY(-100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
 
-/* Responsividade */
-@media screen and (max-width: 600px) {
-  main {
-    flex-direction: column;
-    margin: 0;
-  }
-  section {
-    padding: 0.5em;
-    min-width: 100%;
-    max-width: 100%;
-  }
-  
-  /* Permite scroll horizontal nas tabelas no mobile */
-  .table-wrapper {
-    overflow-x: auto;
-  }
-  
-  table {
-    font-size: 0.7rem;
-    /* Altera para layout automático para melhor quebra no mobile */
-    table-layout: auto;
-  }
-  
-  th, td {
-    padding: 0.3em;
-    /* Permite quebra de texto nas células para não ultrapassar */
-    white-space: normal;
-    word-break: break-word;
-    overflow-wrap: break-word;
-  }
-  
-  img.thumb {
-    width: 40px;
-  }
-  .btn {
-    padding: 0.3em 0.7em;
-    font-size: 0.7rem;
-  }
-  input[type="text"], input[type="date"] {
-    font-size: 0.7rem;
-  }
-}
+    .notification-close {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: #856404;
+    }
 
-</style>
+    .container {
+      padding: 1rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .stats-card {
+      background-color: var(--surface);
+      padding: 1.5rem;
+      border-radius: 12px;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 2px 8px var(--shadow);
+    }
+
+    .stats-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      color: var(--primary);
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 1rem;
+    }
+
+    .stat-item {
+      text-align: center;
+      padding: 1rem;
+      background-color: var(--background);
+      border-radius: 8px;
+    }
+
+    .stat-value {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--secondary);
+    }
+
+    .stat-label {
+      font-size: 0.9rem;
+      color: var(--text);
+      opacity: 0.7;
+      margin-top: 0.25rem;
+    }
+
+    .section-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .photos-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .photo-card {
+      background-color: var(--surface);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px var(--shadow);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .photo-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 4px 16px var(--shadow);
+    }
+
+    .photo-image {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+      background-color: var(--background);
+    }
+
+    .photo-content {
+      padding: 1rem;
+    }
+
+    .photo-name {
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: var(--text);
+    }
+
+    .photo-details {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+      font-size: 0.9rem;
+      color: var(--text);
+      opacity: 0.8;
+      margin-bottom: 1rem;
+    }
+
+    .photo-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      padding: 0.5rem 1rem;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 500;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .btn-primary {
+      background-color: var(--secondary);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      opacity: 0.9;
+      transform: translateY(-2px);
+    }
+
+    .btn-danger {
+      background-color: var(--accent);
+      color: white;
+    }
+
+    .btn-danger:hover {
+      opacity: 0.9;
+    }
+
+    .btn-secondary {
+      background-color: var(--background);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      background-color: rgba(0, 0, 0, 0.05);
+    }
+
+    .btn-small {
+      padding: 0.4rem 0.8rem;
+      font-size: 0.85rem;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100vh;
+      background-color: rgba(0, 0, 0, 0.6);
+      z-index: 300;
+      overflow-y: auto;
+      padding: 1rem;
+    }
+
+    .modal.active {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-content {
+      background-color: var(--surface);
+      border-radius: 12px;
+      width: 100%;
+      max-width: 500px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 8px 32px var(--shadow);
+    }
+
+    .modal-header {
+      padding: 1.5rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: var(--primary);
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: var(--text);
+    }
+
+    .modal-body {
+      padding: 1.5rem;
+    }
+
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    .form-input,
+    .form-select {
+      width: 100%;
+      padding: 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 1rem;
+      background-color: var(--surface);
+      color: var(--text);
+    }
+
+    .form-input:focus,
+    .form-select:focus {
+      outline: none;
+      border-color: var(--secondary);
+      box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+    }
+
+    .file-input-wrapper {
+      position: relative;
+      overflow: hidden;
+      display: inline-block;
+      width: 100%;
+    }
+
+    .file-input-label {
+      display: block;
+      padding: 0.75rem;
+      background-color: var(--background);
+      border: 2px dashed var(--border);
+      border-radius: 6px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .file-input-label:hover {
+      border-color: var(--secondary);
+      background-color: rgba(52, 152, 219, 0.05);
+    }
+
+    .file-input {
+      position: absolute;
+      left: -9999px;
+    }
+
+    .image-preview {
+      margin-top: 1rem;
+      max-width: 100%;
+      border-radius: 8px;
+    }
+
+    .image-preview img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 8px;
+    }
+
+    .theme-selector {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 1rem;
+    }
+
+    .theme-option {
+      padding: 1rem;
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s;
+      background-color: var(--surface);
+    }
+
+    .theme-option:hover {
+      transform: scale(1.05);
+    }
+
+    .theme-option.active {
+      border-color: var(--secondary);
+      background-color: rgba(52, 152, 219, 0.1);
+    }
+
+    .theme-color-preview {
+      width: 100%;
+      height: 60px;
+      border-radius: 6px;
+      margin-bottom: 0.5rem;
+    }
+
+    .theme-name {
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: var(--text);
+      opacity: 0.6;
+    }
+
+    .empty-state-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+    }
+
+    .countdown {
+      display: inline-block;
+      padding: 0.25rem 0.5rem;
+      background-color: var(--accent);
+      color: white;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-top: 0.5rem;
+    }
+
+    .countdown.active {
+      background-color: #27AE60;
+    }
+
+    .fab {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background-color: var(--secondary);
+      color: white;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      box-shadow: 0 4px 12px var(--shadow);
+      transition: all 0.2s;
+      z-index: 50;
+    }
+
+    .fab:hover {
+      transform: scale(1.1);
+      box-shadow: 0 6px 16px var(--shadow);
+    }
+
+    @media (max-width: 768px) {
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .photos-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .exhibition-badge {
+      display: inline-block;
+      padding: 0.25rem 0.5rem;
+      background-color: #E8F5E9;
+      color: #2E7D32;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-top: 0.5rem;
+    }
+
+    .date-range {
+      font-size: 0.85rem;
+      color: var(--text);
+      opacity: 0.7;
+      margin-top: 0.25rem;
+    }
+  </style>
 </head>
 <body>
+  <div class="header">
+    <button class="menu-btn" onclick="toggleMenu()" aria-label="Menu">☰</button>
+    <div class="header-title">Inventário de Fotos</div>
+  </div>
 
-<header>Catálogo de Fotos e Exposições</header>
-
-<main>
-  <section style="flex-basis:400px;">
-    <h2>Adicionar Foto</h2>
-    <div class="card">
-      <form id="addForm">
-        <label>Nome da foto:<br>
-          <input type="text" required id="nomeFoto" />
-        </label><br /><br />
-        <label>Imagem da foto (URL ou ficheiro):<br />
-          <input type="file" accept="image/*" id="filePhoto" />
-          <br />ou<br />
-          <input type="text" placeholder="URL da imagem" id="urlPhoto" />
-        </label><br /><br />
-        <label><input type="checkbox" id="tamP" /> Pequeno</label>
-        <label><input type="checkbox" id="tamM" /> Médio</label>
-        <label><input type="checkbox" id="tamG" /> Grande</label>
-        <br /><br />
-        <button class="btn" type="submit">Adicionar</button>
-      </form>
+  <div class="menu-overlay" id="menuOverlay" onclick="closeMenu()"></div>
+  
+  <div class="side-menu" id="sideMenu">
+    <div class="menu-header">Menu</div>
+    <div class="menu-items">
+      <div class="menu-item" onclick="openAddPhotoModal()">
+        <span class="menu-item-icon">📷</span>
+        <span>Adicionar Foto</span>
+      </div>
+      <div class="menu-item" onclick="scrollToStats()">
+        <span class="menu-item-icon">📊</span>
+        <span>Ver Estatísticas</span>
+      </div>
+      <div class="menu-item" onclick="openImportModal()">
+        <span class="menu-item-icon">📥</span>
+        <span>Importar Dados</span>
+      </div>
+      <div class="menu-item" onclick="exportData()">
+        <span class="menu-item-icon">📤</span>
+        <span>Exportar Dados</span>
+      </div>
+      <div class="menu-item" onclick="exportExhibitionPDF()">
+        <span class="menu-item-icon">📄</span>
+        <span>Exportar Exposição PDF</span>
+      </div>
+      <div class="menu-item" onclick="openThemeModal()">
+        <span class="menu-item-icon">🎨</span>
+        <span>Alterar Tema</span>
+      </div>
     </div>
-    <div class="card">
-      <button class="btn" onclick="exportJSON()">Exportar JSON</button>
-      <input type="file" accept="application/json" onchange="importJSON(event)" />
-      <br /><br />
-      <label>Exportar PDF da exposição:
-        <select id="selectExpoPDF"></select>
-        <button class="btn" onclick="exportPDF()">Exportar PDF</button>
-      </label>
+  </div>
+
+  <div id="notificationContainer"></div>
+
+  <div class="container">
+    <div class="stats-card" id="statsSection">
+      <div class="stats-title">Estatísticas</div>
+      <div class="stats-grid">
+        <div class="stat-item">
+          <div class="stat-value" id="totalPhotos">0</div>
+          <div class="stat-label">Total</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value" id="smallCount">0</div>
+          <div class="stat-label">Pequeno</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value" id="mediumCount">0</div>
+          <div class="stat-label">Médio</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value" id="largeCount">0</div>
+          <div class="stat-label">Grande</div>
+        </div>
+      </div>
     </div>
-    <div class="card">
-      <h2>Resumo</h2>
-      <div id="resumoPainel"></div>
+
+    <div id="exhibitionSection" style="display: none;">
+      <div class="section-title">📦 Exposições Pendentes</div>
+      <div class="photos-grid" id="exhibitionGrid"></div>
     </div>
-  </section>
 
-  <section>
-    <h2>Fotos em Casa</h2>
-    <div class="table-wrapper">
-      <button class="btn" onclick="apagarTodasFotos()">Apagar Todas as Fotos em Casa</button>
-      <table id="tableCasa">
-        <thead>
-          <tr>
-            <th>Foto</th>
-            <th>Nome</th>
-            <th>Tamanho</th>
-            <th>Enviar para Exposição</th>
-            <th>Destino</th>
-            <th>Datas</th>
-            <th>Remover</th>
-            <th>Editar Tamanhos</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
+    <div class="section-title">🏠 Casa (Fotos Disponíveis)</div>
+    <div class="photos-grid" id="photosGrid"></div>
+    <div id="emptyState" class="empty-state">
+      <div class="empty-state-icon">📷</div>
+      <p>Nenhuma foto adicionada ainda</p>
+      <p style="font-size: 0.9rem;">Clique no menu para adicionar a primeira foto</p>
     </div>
-  </section>
+  </div>
 
-  <section class="area-expo">
-    <h2>Fotos em Exposição</h2>
-    <div class="expo-title" id="expoSelecionada"></div>
-    <div class="table-wrapper">
-      <button class="btn" onclick="removerSelecionadasDaExposicao()">Apagar Fotos Selecionadas da Exposição</button>
-      <table id="tableExpo">
-        <thead>
-          <tr>
-            <th>✓ Checklist</th>
-            <th>Foto</th>
-            <th>Nome</th>
-            <th>Tamanho</th>
-            <th>Exposição</th>
-            <th>Datas</th>
-            <th>Remover</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
+  <button class="fab" onclick="openAddPhotoModal()" aria-label="Adicionar Foto">+</button>
+
+  <!-- Modal Adicionar Foto -->
+  <div class="modal" id="addPhotoModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title">Adicionar Nova Foto</div>
+        <button class="modal-close" onclick="closeAddPhotoModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="addPhotoForm" onsubmit="addPhoto(event)">
+          <div class="form-group">
+            <label class="form-label">Imagem</label>
+            <div class="file-input-wrapper">
+              <label class="file-input-label" for="photoImage">
+                📁 Selecionar Imagem (máx 2MB)
+              </label>
+              <input type="file" id="photoImage" class="file-input" accept="image/*" onchange="previewImage(event)" required>
+            </div>
+            <div class="image-preview" id="imagePreviewContainer"></div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Nome da Foto</label>
+            <input type="text" class="form-input" id="photoName" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Tamanho</label>
+            <select class="form-select" id="photoSize" required>
+              <option value="pequeno">Pequeno</option>
+              <option value="medio">Médio</option>
+              <option value="grande">Grande</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Localização</label>
+            <input type="text" class="form-input" id="photoLocation" value="Casa" required>
+          </div>
+          <button type="submit" class="btn btn-primary" style="width: 100%;">Adicionar Foto</button>
+        </form>
+      </div>
     </div>
-  </section>
-</main>
+  </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <!-- Modal Exposição -->
+  <div class="modal" id="exhibitionModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title">Definir Exposição</div>
+        <button class="modal-close" onclick="closeExhibitionModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="exhibitionForm" onsubmit="setExhibition(event)">
+          <div class="form-group">
+            <label class="form-label">Data de Início</label>
+            <input type="date" class="form-input" id="exhibitionStart" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Data de Fim</label>
+            <input type="date" class="form-input" id="exhibitionEnd" required>
+          </div>
+          <button type="submit" class="btn btn-primary" style="width: 100%;">Confirmar Exposição</button>
+        </form>
+      </div>
+    </div>
+  </div>
 
-<script>
-const tamanhos = [
-  { id: "p", nome: "Pequeno" },
-  { id: "m", nome: "Médio" },
-  { id: "g", nome: "Grande" }
-];
+  <!-- Modal Tema -->
+  <div class="modal" id="themeModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title">Alterar Tema</div>
+        <button class="modal-close" onclick="closeThemeModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="theme-selector" id="themeSelector"></div>
+      </div>
+    </div>
+  </div>
 
-let fotos = [];
+  <!-- Modal Importar -->
+  <div class="modal" id="importModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title">Importar Dados</div>
+        <button class="modal-close" onclick="closeImportModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Selecionar Ficheiro JSON</label>
+          <div class="file-input-wrapper">
+            <label class="file-input-label" for="importFile">
+              📁 Escolher Ficheiro
+            </label>
+            <input type="file" id="importFile" class="file-input" accept=".json" onchange="importData(event)">
+          </div>
+          <p style="margin-top: 1rem; font-size: 0.9rem; color: var(--accent);">⚠️ Isto irá substituir todos os dados atuais!</p>
+        </div>
+      </div>
+    </div>
+  </div>
 
-function salvarLocalStorage() {
-  localStorage.setItem("catalogoFotosExpsoicoes", JSON.stringify(fotos));
-}
-
-function carregarLocalStorage() {
-  const data = localStorage.getItem("catalogoFotosExpsoicoes");
-  fotos = data ? JSON.parse(data) : [];
-}
-
-function novaFotoObj({ nome, imageUrl, tamanhosDisponiveis }) {
-  let obj = {
-    id: 'f' + Date.now() + Math.floor(Math.random() * 9999),
-    nome,
-    imageUrl,
-    tamanhos: {}
-  };
-  tamanhos.forEach(t => {
-    obj.tamanhos[t.id] = {
-      disponivel: tamanhosDisponiveis.includes(t.id),
-      enviado: false,
-      exposicao: "",
-      dataInicio: "",
-      dataFim: "",
-      risked: false
-    }
-  });
-  return obj;
-}
-
-document.getElementById('addForm').onsubmit = function(e) {
-  e.preventDefault();
-  let nome = document.getElementById('nomeFoto').value.trim();
-  let imageUrl = document.getElementById('urlPhoto').value.trim();
-  const fileInput = document.getElementById('filePhoto');
-  if (fileInput.files[0]) {
-    const reader = new FileReader();
-    reader.onload = function(ev) {
-      inserirFoto(nome, ev.target.result);
-    };
-    reader.readAsDataURL(fileInput.files[0]);
-  } else {
-    inserirFoto(nome, imageUrl);
-  }
-};
-
-function inserirFoto(nome, imageUrl) {
-  let tam = [];
-  if (document.getElementById('tamP').checked) tam.push("p");
-  if (document.getElementById('tamM').checked) tam.push("m");
-  if (document.getElementById('tamG').checked) tam.push("g");
-  if (!nome || !imageUrl || tam.length === 0) {
-    alert("Preencha todos os campos (nome, imagem e tamanhos)!");
-    return;
-  }
-  fotos.push(novaFotoObj({ nome, imageUrl, tamanhosDisponiveis: tam }));
-  document.getElementById('nomeFoto').value = "";
-  document.getElementById('urlPhoto').value = "";
-  document.getElementById('filePhoto').value = "";
-  document.getElementById('tamP').checked = false;
-  document.getElementById('tamM').checked = false;
-  document.getElementById('tamG').checked = false;
-  atualizarUI();
-}
-
-function apagarTodasFotos() {
-  if (confirm("Tem a certeza que deseja apagar todas as fotos em casa?")) {
-    fotos = [];
-    salvarLocalStorage();
-    atualizarUI();
-  }
-}
-
-function marcarEnviadoGrupo(nomeFoto, valor) {
-  fotos.forEach(foto => {
-    if (foto.nome === nomeFoto) {
-      tamanhos.forEach(t => {
-        if (foto.tamanhos[t.id].disponivel) {
-          foto.tamanhos[t.id].enviado = valor;
-          if (!valor) {
-            foto.tamanhos[t.id].exposicao = "";
-            foto.tamanhos[t.id].dataInicio = "";
-            foto.tamanhos[t.id].dataFim = "";
-            foto.tamanhos[t.id].risked = false;
-          }
-        }
-      });
-    }
-  });
-  atualizarUI();
-}
-
-function definirExposicaoGrupo(nomeFoto, valor) {
-  fotos.forEach(foto => {
-    if (foto.nome === nomeFoto) {
-      tamanhos.forEach(t => {
-        if (foto.tamanhos[t.id].disponivel && foto.tamanhos[t.id].enviado) {
-          foto.tamanhos[t.id].exposicao = valor;
-        }
-      });
-    }
-  });
-  atualizarUI();
-}
-
-function removerFotoGrupo(nomeFoto) {
-  fotos = fotos.filter(foto => foto.nome !== nomeFoto);
-  atualizarUI();
-}
-
-function atualizarTabelaCasa() {
-  const tb = document.querySelector('#tableCasa tbody');
-  tb.innerHTML = "";
-
-  const grupos = {};
-  fotos.forEach(foto => {
-    if (!grupos[foto.nome]) {
-      grupos[foto.nome] = {
-        fotoGeral: foto,
-        tamanhos: []
-      };
-    }
-    tamanhos.forEach(t => {
-      if (foto.tamanhos[t.id].disponivel) {
-        grupos[foto.nome].tamanhos.push({
-          id: t.id,
-          nome: t.nome,
-          enviado: foto.tamanhos[t.id].enviado,
-          exposicao: foto.tamanhos[t.id].exposicao
-        });
-      }
-    });
-  });
-
-  Object.values(grupos).forEach(grupo => {
-    const foto = grupo.fotoGeral;
-    const tamanhosDisponiveis = grupo.tamanhos.map(t => t.enviado ? `${t.nome} (em exposição)` : t.nome);
-
-    if (tamanhosDisponiveis.length === 0) return;
-
-    const temEnviado = grupo.tamanhos.some(t => t.enviado);
-
-    let exposicaoValor = "";
-    for (let t of grupo.tamanhos) {
-      if (t.enviado && t.exposicao) {
-        exposicaoValor = t.exposicao;
-        break;
-      }
-    }
-
-    let tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td><img class="thumb" src="${foto.imageUrl}"></td>
-      <td>${foto.nome}</td>
-      <td>${tamanhosDisponiveis.join(", ")}</td>
-      <td>
-        ${temEnviado
-          ? "Indisponível (em exposição)"
-          : `<input type="checkbox" onchange="marcarEnviadoGrupo('${foto.nome}', this.checked)">
-             <label>Ir para exposição</label>`
-        }
-      </td>
-      <td>
-        <input type="text" placeholder="Nome exposição" value="${exposicaoValor}"
-          ${temEnviado ? '' : 'disabled'}
-          onchange="definirExposicaoGrupo('${foto.nome}', this.value)">
-      </td>
-      <td>---</td>
-      <td><button class="btn" onclick="removerFotoGrupo('${foto.nome}')">🗑</button></td>
-      <td><!-- Espaço para funcionalidades futuras --></td>
-    `;
-    tb.appendChild(tr);
-  });
-}
-
-function atualizarTabelaExpo() {
-  const tb = document.querySelector('#tableExpo tbody');
-  tb.innerHTML = "";
-  const selectExpo = document.getElementById("selectExpoPDF");
-  const expoFiltro = selectExpo.value || "";
-  document.getElementById("expoSelecionada").textContent = expoFiltro ? ("Exposição " + expoFiltro) : "";
-
-  const grupos = {};
-  fotos.forEach(foto => {
-    const tamanhosEnviados = tamanhos.filter(t => {
-      return foto.tamanhos[t.id].disponivel &&
-        foto.tamanhos[t.id].enviado &&
-        (expoFiltro === "" || foto.tamanhos[t.id].exposicao === expoFiltro);
-    });
-    if (tamanhosEnviados.length > 0) {
-      grupos[foto.id] = {
-        foto: foto,
-        tamanhos: tamanhosEnviados
-      };
-    }
-  });
-
-  Object.values(grupos).forEach(grupo => {
-    const { foto, tamanhos } = grupo;
-
-    const tamanhosTexto = tamanhos.map(t => t.nome).join(", ");
-    const riskedAlgum = tamanhos.some(t => foto.tamanhos[t.id].risked);
-
-    const riskedChecks = tamanhos.map(t => {
-      const checked = foto.tamanhos[t.id].risked ? 'checked' : '';
-      return `<label class="checklist"><input type="checkbox" ${checked} onchange="marcarRisked('${foto.id}', '${t.id}', this.checked)">${checked ? '✅' : '☐'}</label>`;
-    }).join(" ");
-
-    const removerBotoes = tamanhos.map(t =>
-      `<button class="btn" title="Remover tamanho ${t.nome}" onclick="removerDaExposicao('${foto.id}', '${t.id}')">🗑</button>`
-    ).join(" ");
-
-    let tr = document.createElement("tr");
-    tr.classList.toggle('risked', riskedAlgum);
-    tr.innerHTML = `
-      <td>${riskedChecks}</td>
-      <td><img class="thumb" src="${foto.imageUrl}"></td>
-      <td>${foto.nome}</td>
-      <td>${tamanhosTexto}</td>
-      <td>${expoFiltro}</td>
-      <td>
-        <span>De:</span> ${tamanhos.map(t => foto.tamanhos[t.id].dataInicio).join(", ")}<br/>
-        <span>Até:</span> ${tamanhos.map(t => foto.tamanhos[t.id].dataFim).join(", ")}
-      </td>
-      <td>${removerBotoes}</td>
-    `;
-    tb.appendChild(tr);
-  });
-}
-
-function marcarRisked(fid, tid, r) {
-  const foto = fotos.find(f => f.id === fid);
-  if (!foto) return;
-  foto.tamanhos[tid].risked = r;
-  atualizarUI();
-}
-
-function removerFoto(fid) {
-  fotos = fotos.filter(f => f.id !== fid);
-  atualizarUI();
-}
-
-function removerDaExposicao(fid, tid) {
-  const foto = fotos.find(f => f.id === fid);
-  if (!foto) return;
-  foto.tamanhos[tid].enviado = false;
-  foto.tamanhos[tid].exposicao = "";
-  foto.tamanhos[tid].dataInicio = "";
-  foto.tamanhos[tid].dataFim = "";
-  foto.tamanhos[tid].risked = false;
-  atualizarUI();
-}
-
-function atualizarResumo() {
-  let total = fotos.length;
-  let disp = { p: 0, m: 0, g: 0 }, envio = { p: 0, m: 0, g: 0 }, exps = {};
-  fotos.forEach(foto => {
-    tamanhos.forEach(t => {
-      let dt = foto.tamanhos[t.id];
-      if (dt.disponivel) disp[t.id]++;
-      if (dt.disponivel && dt.enviado) {
-        envio[t.id]++;
-        if (dt.exposicao)
-          exps[dt.exposicao] = (exps[dt.exposicao] || 0) + 1;
-      }
-    });
-  });
-  let html = `
-    <b>Total de fotos:</b> ${total}<br>
-    <b>Disponíveis:</b>
-    Pequeno: ${disp.p},
-    Médio: ${disp.m},
-    Grande: ${disp.g} <br>
-    <b>Enviados:</b>
-    Pequeno: ${envio.p},
-    Médio: ${envio.m},
-    Grande: ${envio.g}
-    <br>
-    <b>Exposições:</b>
-    <ul>
-  `;
-  Object.keys(exps).forEach(k => {
-    html += `<li>${k}: ${exps[k]} fotos</li>`;
-  });
-  html += "</ul>";
-  document.getElementById('resumoPainel').innerHTML = html;
-}
-
-function exportJSON() {
-  const dataStr = JSON.stringify(fotos, null, 4);
-  const blob = new Blob([dataStr], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "fotos-exposicoes.json";
-  document.body.appendChild(a);
-  a.click();
-  setTimeout(() => document.body.removeChild(a), 1000);
-}
-
-function importJSON(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    fotos = JSON.parse(e.target.result);
-    atualizarUI();
-  }
-  reader.readAsText(file);
-}
-
-function atualizarExpoPDF() {
-  const select = document.getElementById('selectExpoPDF');
-  let exps = {};
-  fotos.forEach(foto => {
-    tamanhos.forEach(t => {
-      const dt = foto.tamanhos[t.id];
-      if (dt.disponivel && dt.enviado && dt.exposicao) {
-        exps[dt.exposicao] = 1;
-      }
-    });
-  });
-  select.innerHTML = '<option value=""></option>';
-  Object.keys(exps).forEach(k => {
-    let opt = document.createElement('option');
-    opt.value = k;
-    opt.text = k;
-    select.appendChild(opt);
-  });
-}
-
-function exportPDF() {
-  const expo = document.getElementById("selectExpoPDF").value;
-  if (!expo) { alert("Selecione uma exposição para exportar!"); return; }
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF();
-  let y = 10;
-  doc.setFontSize(16);
-  doc.text(`Fotos para exposição: ${expo}`, 10, y);
-  y += 10;
-  fotos.forEach(foto => {
-    tamanhos.forEach(t => {
-      const dt = foto.tamanhos[t.id];
-      if (dt.disponivel && dt.enviado && dt.exposicao === expo) {
-        if (foto.imageUrl.startsWith("data")) {
-          doc.addImage(foto.imageUrl, "JPEG", 10, y, 30, 30);
-        }
-        doc.setFontSize(10);
-        doc.text(`Nome: ${foto.nome}`, 45, y + 7);
-        doc.text(`Tamanho: ${t.nome}`, 45, y + 14);
-        doc.text(`De: ${dt.dataInicio}   Até: ${dt.dataFim}`, 45, y + 21);
-        y += 35;
-        if (y > 270) { doc.addPage(); y = 10; }
-      }
-    });
-  });
-  doc.save(`exposicao_${expo}.pdf`);
-}
-
-// Atualiza a UI geral
-function atualizarUI() {
-  salvarLocalStorage();
-  atualizarTabelaCasa();
-  atualizarTabelaExpo();
-  atualizarResumo();
-  atualizarExpoPDF();
-}
-
-// Inicialização
-carregarLocalStorage();
-atualizarUI();
-</script>
-
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
