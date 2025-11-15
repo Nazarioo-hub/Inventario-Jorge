@@ -50,6 +50,13 @@ const themes = [
   }
 ];
 
+
+if ('serviceWorker' in navigator){
+  navigator.serviceWorker.register('service-worker.js').then(() => {
+    console.log("Service Worker registado!");
+  });
+}
+
 let currentTheme = 0;
 
 // Initialize app
@@ -266,7 +273,7 @@ function createPhotoCard(photo, isExhibition = false) {
   
   return `
     <div class="photo-card">
-      <img src="${photo.image}" alt="${photo.name}" class="photo-image">
+      <img src="${photo.image}" alt="${photo.name}" class="photo-image" onclick="openImageModal('${photo.image}', '${photo.name}')">
       <div class="photo-content">
         <div class="photo-name">${photo.name}</div>
         <div class="photo-details">
@@ -282,6 +289,26 @@ function createPhotoCard(photo, isExhibition = false) {
     </div>
   `;
 }
+
+
+function openImageModal(src, caption) {
+  document.getElementById('modalImg').src = src;
+  document.getElementById('modalImgCaption').innerText = caption;
+  document.getElementById('imageModal').classList.add('active');
+}
+
+function closeImageModal() {
+  document.getElementById('imageModal').classList.remove('active');
+  document.getElementById('modalImg').src = '';
+}
+
+
+
+
+
+
+
+
 
 function updateStats() {
   const total = photos.length;

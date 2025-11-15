@@ -1,0 +1,19 @@
+{
+    "name": "Inventário de Fotos",
+    "short_name": "Inventário",
+    "start_url": ".",
+    "background_color":"#2C3E50",
+    "theme_color": "#2C3E50",
+    "icons": [
+        {
+            "src": "icons/icon-192.png",
+            "type": "image/png",
+            "sizes": "192x192"
+        },
+        {
+            "src": "icons/icon-512.png",
+            "type": "image/png",
+            "sizes": "512x512"
+        }
+    ]
+}

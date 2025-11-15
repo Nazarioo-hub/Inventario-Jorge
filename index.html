@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="manifest" href="manifest.json">
   <title>Inventário de Fotos</title>
   <style>
     :root {
@@ -602,6 +603,21 @@
         <span>Exportar Exposição PDF</span>
       </div>
       
+
+
+      <div class="modal" id="imageModal">
+        <div class="modal-content" style="max-width: 90vw; max-height: 90vh;">
+          <span class="modal-close" onclick="closeImageModal()" style="cursor:pointer; font-size:2rem;">&times;</span>
+          <img id="modalImg" src="" alt="" style="display:block; max-width:100%; max-height:80vh; margin:0 auto;">
+      <div id="modalImgCaption" style="text-align:center; margin-top:1rem;"></div>
+    </div>
+  </div>
+
+
+
+
+
+
       
       <div class="menu-item" onclick="openThemeModal()">
         <span class="menu-item-icon">🎨</span>
