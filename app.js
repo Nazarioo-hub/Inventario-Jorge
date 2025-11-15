@@ -100,8 +100,8 @@ function closeAddPhotoModal() {
 function previewImage(event) {
   const file = event.target.files[0];
   if (file) {
-    if (file.size > 2 * 1024 * 1024) {
-      alert('A imagem é muito grande! Tamanho máximo: 2MB');
+    if (file.size > 10 * 1024 * 1024) {
+      alert('A imagem é muito grande! Tamanho máximo: 10MB');
       event.target.value = '';
       return;
     }
