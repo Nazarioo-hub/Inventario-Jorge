@@ -445,7 +445,6 @@ function showExportJsonModal(jsonString) {
 
 
 
-// Import/Export
 function exportData() {
   const data = {
     photos: photos,
@@ -460,17 +459,19 @@ function exportData() {
   const a = document.createElement('a');
   a.href = url;
   a.download = `inventario-fotos-${new Date().toISOString().split('T')[0]}.json`;
-  
-  // Adiciona para garantir em DOM e dispara clique
+
+  // Tem que anexar à página para funcionar em alguns navegadores móveis
   document.body.appendChild(a);
   a.click();
   
-  // Limpeza
+  // Remover depois
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
 
   showNotification('📤 JSON exportado! Verifique a pasta de downloads.', 'success');
 }
+
+
 
 
 
