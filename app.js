@@ -438,7 +438,6 @@ async function exportData() {
   };
   const jsonString = JSON.stringify(data, null, 2);
 
-  // Cria um blob e arquivo para partilha
   const blob = new Blob([jsonString], { type: "application/json" });
   const file = new File([blob], `inventario-fotos-${new Date().toISOString().split('T')[0]}.json`, { type: "application/json" });
 
@@ -451,7 +450,15 @@ async function exportData() {
       });
       showNotification('📤 Dados exportados e partilhados com sucesso!', 'success');
     } catch (err) {
+      console.error("Erro ao partilhar:", err); // Adicione para debug real
       showNotification('❌ Falha ao partilhar!', 'error');
+      // Fallback para download
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = file.name;
+      a.click();
+      URL.revokeObjectURL(url);
     }
   } else {
     // fallback: download normal
@@ -464,6 +471,7 @@ async function exportData() {
     showNotification('📤 Dados exportados com sucesso! (partilha não suportada)', 'success');
   }
 }
+
 
 
 function openImportModal() {
