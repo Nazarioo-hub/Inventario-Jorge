@@ -60,8 +60,11 @@ if ('serviceWorker' in navigator){
 let currentTheme = 0;
 
 // Initialize app
-function init() {
-  photos = loadPhotosFromStorage();
+async function init() {
+  photos = await loadPhotosFromStorage();
+  if (!Array.isArray(photos)) {
+    photos = []; // garante que seja array
+  }
   currentTheme = loadThemeFromStorage();
   applyTheme(currentTheme);
   renderPhotos();
@@ -113,6 +116,35 @@ function previewImage(event) {
     reader.readAsDataURL(file);
   }
 }
+
+
+let photoIdToDelete = null;
+
+function openDeleteConfirmModal(id) {
+  photoIdToDelete = id;
+  document.getElementById('deleteConfirmModal').classList.add('active');
+}
+
+function closeDeleteConfirmModal() {
+  photoIdToDelete = null;
+  document.getElementById('deleteConfirmModal').classList.remove('active');
+}
+
+function confirmDeletePhoto() {
+  if (photoIdToDelete !== null) {
+    photos = photos.filter(p => p.id !== photoIdToDelete);
+    savePhotosToStorage();
+    renderPhotos();
+    updateStats();
+    showNotification('🗑️ Foto eliminada', 'info');
+    closeDeleteConfirmModal();
+  }
+}
+
+
+
+
+
 
 function addPhoto(event) {
   event.preventDefault();
@@ -211,6 +243,28 @@ function returnToHome(id) {
   }
 }
 
+
+
+
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open('PhotoInventoryDB', 1);
+    req.onupgradeneeded = function(event) {
+      const db = event.target.result;
+      if (!db.objectStoreNames.contains('photos')) {
+        db.createObjectStore('photos', { keyPath: 'id' });
+      }
+    };
+    req.onsuccess = function(event) {
+      resolve(event.target.result);
+    };
+    req.onerror = function(event) {
+      reject(event.target.error);
+    };
+  });
+}
+
+
 function renderPhotos() {
   const homePhotos = photos.filter(p => p.location === 'Casa');
   const exhibitionPhotos = photos.filter(p => p.location === 'Exposição');
@@ -267,9 +321,9 @@ function createPhotoCard(photo, isExhibition = false) {
   
   const actions = isExhibition
     ? `<button class="btn btn-secondary btn-small" onclick="returnToHome(${photo.id})">🏠 Voltar para Casa</button>
-       <button class="btn btn-danger btn-small" onclick="deletePhoto(${photo.id})">🗑️</button>`
+       <button class="btn btn-danger btn-small" onclick="openDeleteConfirmModal(${photo.id})">🗑️</button>`
     : `<button class="btn btn-primary btn-small" onclick="openExhibitionModal(${photo.id})">📦 Para Exposição</button>
-       <button class="btn btn-danger btn-small" onclick="deletePhoto(${photo.id})">🗑️</button>`;
+       <button class="btn btn-danger btn-small" onclick="openDeleteConfirmModal(${photo.id})">🗑️</button>`;
   
   return `
     <div class="photo-card">
@@ -435,14 +489,41 @@ function importData(event) {
 }
 
 
-function savePhotosToStorage(){
-  localStorage.setItem('photos', JSON.stringify(photos));
+async function savePhotosToStorage() {
+  const db = await openDB();
+  const tx = db.transaction('photos', 'readwrite');
+  const store = tx.objectStore('photos');
+
+  // Limpa a store antes de inserir fotos novas (simplifica sincronização)
+  store.clear();
+
+  // Adiciona fotos atuais
+  photos.forEach(photo => {
+    store.put(photo);
+  });
+
+  await tx.complete;
+  db.close();
 }
 
-function loadPhotosFromStorage() {
-  const data = localStorage.getItem('photos');
-  return data ? JSON.parse(data) : [];
+
+async function loadPhotosFromStorage() {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('photos', 'readonly');
+    const store = tx.objectStore('photos');
+    const request = store.getAll();
+    request.onsuccess = () => {
+      resolve(request.result);
+      db.close();
+    };
+    request.onerror = () => {
+      reject(request.error);
+    };
+  });
 }
+
+
 
 function saveThemeToStorage() {
   localStorage.setItem('currentTheme', currentTheme);
@@ -583,4 +664,6 @@ function startExhibitionChecker() {
 }
 
 // Initialize on load
-window.addEventListener('DOMContentLoaded', init);
+window.addEventListener('DOMContentLoaded', () => {
+  init();
+});
