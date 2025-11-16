@@ -429,24 +429,42 @@ function closeThemeModal() {
 }
 
 // Import/Export
-function exportData() {
+async function exportData() {
   closeMenu();
   const data = {
     photos: photos,
     exportDate: new Date().toISOString(),
     version: '1.0'
   };
-  
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `inventario-fotos-${new Date().toISOString().split('T')[0]}.json`;
-  a.click();
-  URL.revokeObjectURL(url);
-  
-  showNotification('📤 Dados exportados com sucesso!', 'success');
+  const jsonString = JSON.stringify(data, null, 2);
+
+  // Cria um blob e arquivo para partilha
+  const blob = new Blob([jsonString], { type: "application/json" });
+  const file = new File([blob], `inventario-fotos-${new Date().toISOString().split('T')[0]}.json`, { type: "application/json" });
+
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    try {
+      await navigator.share({
+        files: [file],
+        title: "Inventário de Fotos",
+        text: "Exportação dos dados do app de fotos",
+      });
+      showNotification('📤 Dados exportados e partilhados com sucesso!', 'success');
+    } catch (err) {
+      showNotification('❌ Falha ao partilhar!', 'error');
+    }
+  } else {
+    // fallback: download normal
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = file.name;
+    a.click();
+    URL.revokeObjectURL(url);
+    showNotification('📤 Dados exportados com sucesso! (partilha não suportada)', 'success');
+  }
 }
+
 
 function openImportModal() {
   closeMenu();
