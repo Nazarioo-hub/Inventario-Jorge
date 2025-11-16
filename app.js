@@ -428,25 +428,46 @@ function closeThemeModal() {
   document.getElementById('themeModal').classList.remove('active');
 }
 
+
+
+function showExportJsonModal(jsonString) {
+  const modalHtml = `
+    <div id="jsonExportModal" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;z-index:9999;">
+      <div style="background:#fff;padding:1rem;max-width:90%;max-height:80%;overflow:auto;border-radius:8px;">
+        <h3>Copie o JSON exportado</h3>
+        <textarea style="width:100%;height:300px;">${jsonString}</textarea>
+        <button onclick="document.getElementById('jsonExportModal').remove()">Fechar</button>
+      </div>
+    </div>`;
+  document.body.insertAdjacentHTML('beforeend', modalHtml);
+}
+
+
+
+
 // Import/Export
 function exportData() {
-  closeMenu();
   const data = {
     photos: photos,
     exportDate: new Date().toISOString(),
     version: '1.0'
   };
-  
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `inventario-fotos-${new Date().toISOString().split('T')[0]}.json`;
-  a.click();
-  URL.revokeObjectURL(url);
-  
-  showNotification('📤 Dados exportados com sucesso!', 'success');
+  const jsonString = JSON.stringify(data, null, 2);
+
+  if (navigator.share) {
+    navigator.share({
+      title: 'Inventário de Fotos',
+      text: jsonString
+    }).catch(() => {
+      showExportJsonModal(jsonString);
+      showNotification('⚠️ Web Share não disponível. Copie o JSON manualmente.', 'warning');
+    });
+  } else {
+    showExportJsonModal(jsonString);
+    showNotification('⚠️ Web Share não disponível. Copie o JSON manualmente.', 'warning');
+  }
 }
+
 
 function openImportModal() {
   closeMenu();
