@@ -454,19 +454,21 @@ function exportData() {
   };
   const jsonString = JSON.stringify(data, null, 2);
 
-  if (navigator.share) {
-    navigator.share({
-      title: 'Inventário de Fotos',
-      text: jsonString
-    }).catch(() => {
-      showExportJsonModal(jsonString);
-      showNotification('⚠️ Web Share não disponível. Copie o JSON manualmente.', 'warning');
-    });
-  } else {
-    showExportJsonModal(jsonString);
-    showNotification('⚠️ Web Share não disponível. Copie o JSON manualmente.', 'warning');
-  }
+  const blob = new Blob([jsonString], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `inventario-fotos-${new Date().toISOString().split('T')[0]}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  
+  URL.revokeObjectURL(url);
+  
+  showNotification('📤 JSON exportado! Verifique a pasta de downloads.', 'success');
 }
+
 
 
 function openImportModal() {
