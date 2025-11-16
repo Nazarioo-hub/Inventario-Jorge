@@ -468,7 +468,7 @@ function exportData() {
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
 
-  showNotification('📤 JSON exportado! Verifique a pasta de downloads.', 'success');
+  showNotification('📤 JSON exportado! Verifique a pasta de downloads.', 'success'); 
 }
 
 
