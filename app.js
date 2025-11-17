@@ -472,6 +472,104 @@ function exportData() {
 }
 
 
+let gapiInitialized = false;
+
+
+async function initGApi() {
+  await new Promise((resolve, reject) => {
+    gapi.load("client:auth2", () => {
+      gapi.auth2.init({
+        client_id: '177981579072-3psnkbj4tvqd6qjl4u96gl5bg0e80j9c.apps.googleusercontent.com',
+        scope: 'https://www.googleapis.com/auth/drive.file'
+      }).then(() => {
+        gapiInitialized = true;
+        resolve();
+      }).catch(err => reject(err));
+    });
+  });
+}
+
+
+
+function authenticate() {
+  return new Promise((resolve, reject) => {
+    const authInstance = gapi.auth2.getAuthInstance();
+    if (!authInstance) {
+      reject('gapi auth2 ainda não foi inicializado');
+      return;
+    }
+    authInstance.signIn({ scope: 'https://www.googleapis.com/auth/drive.file' })
+      .then(resolve)
+      .catch(reject);
+  });
+}
+
+
+async function ensureGapiInitialized() {
+  if (!gapiInitialized) {
+    await initGApi();
+  }
+}
+
+
+
+
+async function exportToDrive() {
+  const data = {
+    photos: photos,
+    exportDate: new Date().toISOString(),
+    version: '1.0'
+  };
+  const jsonString = JSON.stringify(data, null, 2);
+
+  try {
+    // Autenticar usuário e obter token de acesso
+    await ensureGapiInitialized();
+    const user = await authenticate();
+    const accessToken = user.getAuthResponse().access_token;
+
+    const fileMetadata = {
+      name: `inventario-fotos-${new Date().toISOString().split('T')[0]}.json`,
+      mimeType: 'application/json'
+    };
+    const fileContent = new Blob([jsonString], { type: 'application/json' });
+
+    const form = new FormData();
+    form.append('metadata', new Blob([JSON.stringify(fileMetadata)], { type: 'application/json' }));
+    form.append('file', fileContent);
+
+    const response = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+      method: 'POST',
+      headers: new Headers({ 'Authorization': 'Bearer ' + accessToken }),
+      body: form
+    });
+
+    if (response.ok) {
+      showNotification('✅ JSON exportado para Google Drive!', 'success');
+    } else {
+      showNotification('❌ Falha ao fazer upload para o Drive.', 'error');
+      console.error(await response.text());
+    }
+  } catch (error) {
+    console.error('Erro durante upload para Drive:', error);
+    showNotification('❌ Erro ao exportar para Google Drive.', 'error');
+  }
+}
+
+
+
+
+
+function loadClient() {
+  gapi.client.setApiKey("AIzaSyCVwHA5y_x1FdfvRNY2mxZlhCIHBYGIx6U");
+  return gapi.client.load("https://content.googleapis.com/discovery/v1/apis/drive/v3/rest")
+    .then(() => console.log("GAPI client loaded for API"))
+    .catch(err => console.error("Error loading GAPI client for API", err));
+}
+
+/*gapi.load("client:auth2", () => {
+  gapi.auth2.init({client_id: "177981579072-3psnkbj4tvqd6qjl4u96gl5bg0e80j9c.apps.googleusercontent.com"});
+});*/
 
 
 
@@ -654,6 +752,7 @@ function exportExhibitionPDF() {
   showNotification('📄 PDF exportado com sucesso!', 'success');
 }
 
+
 // Notifications
 function showNotification(message, type = 'info') {
   const container = document.getElementById('notificationContainer');
@@ -694,4 +793,5 @@ function startExhibitionChecker() {
 // Initialize on load
 window.addEventListener('DOMContentLoaded', () => {
   init();
+  initGApi().then(() => console.log('GAPI Initialized')).catch(console.error);
 });
