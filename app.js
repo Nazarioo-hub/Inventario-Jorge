@@ -472,7 +472,7 @@ function showExportJsonModal(jsonString) {
 }*/
 
 
-let gapiInitialized = false;
+l
 
 
 
@@ -529,7 +529,6 @@ async function exportToDrive() {
     showNotification('❌ Erro ao exportar para Google Drive.', 'error');
   }
 }
-
 
 
 
