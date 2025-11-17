@@ -488,6 +488,11 @@ let gapiInitialized = false;
 
 
 async function exportToDrive() {
+  if (!currentJwtToken) {
+    showNotification('❌ Usuário não autenticado.', 'error');
+    return;
+  }
+
   const data = {
     photos: photos,
     exportDate: new Date().toISOString(),
@@ -495,33 +500,29 @@ async function exportToDrive() {
   };
   const jsonString = JSON.stringify(data, null, 2);
 
+  const fileMetadata = {
+    name: `inventario-fotos-${new Date().toISOString().split('T')[0]}.json`,
+    mimeType: 'application/json'
+  };
+  const fileContent = new Blob([jsonString], { type: 'application/json' });
+
+  const form = new FormData();
+  form.append('metadata', new Blob([JSON.stringify(fileMetadata)], { type: 'application/json' }));
+  form.append('file', fileContent);
+
   try {
-    // Autenticar usuário e obter token de acesso
-    await ensureGapiInitialized();
-    const user = await authenticate();
-    const accessToken = user.getAuthResponse().access_token;
-
-    const fileMetadata = {
-      name: `inventario-fotos-${new Date().toISOString().split('T')[0]}.json`,
-      mimeType: 'application/json'
-    };
-    const fileContent = new Blob([jsonString], { type: 'application/json' });
-
-    const form = new FormData();
-    form.append('metadata', new Blob([JSON.stringify(fileMetadata)], { type: 'application/json' }));
-    form.append('file', fileContent);
-
     const response = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
       method: 'POST',
-      headers: new Headers({ 'Authorization': 'Bearer ' + accessToken }),
+      headers: new Headers({ 'Authorization': `Bearer ${currentJwtToken}` }),
       body: form
     });
 
     if (response.ok) {
       showNotification('✅ JSON exportado para Google Drive!', 'success');
     } else {
+      const errorMsg = await response.text();
+      console.error('Erro no upload:', errorMsg);
       showNotification('❌ Falha ao fazer upload para o Drive.', 'error');
-      console.error(await response.text());
     }
   } catch (error) {
     console.error('Erro durante upload para Drive:', error);
@@ -785,6 +786,20 @@ function startExhibitionChecker() {
     });
   }, 1000);
 }
+
+let currentJwtToken = null;  // variável global para armazenar token
+
+function handleCredentialResponse(response) {
+  currentJwtToken = response.credential;
+  console.log("Token JWT recebido:", currentJwtToken);
+
+  // Você pode incluir lógica para trocar JWT por um Access Token se necessário, ou usar diretamente se o seu backend aceitar JWT
+}
+
+
+
+
+
 
 // Initialize on load
 window.addEventListener('DOMContentLoaded', () => {
