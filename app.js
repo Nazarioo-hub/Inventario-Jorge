@@ -475,41 +475,14 @@ function showExportJsonModal(jsonString) {
 let gapiInitialized = false;
 
 
-async function initGApi() {
-  await new Promise((resolve, reject) => {
-    gapi.load("client:auth2", () => {
-      gapi.auth2.init({
-        client_id: '177981579072-3psnkbj4tvqd6qjl4u96gl5bg0e80j9c.apps.googleusercontent.com',
-        scope: 'https://www.googleapis.com/auth/drive.file'
-      }).then(() => {
-        gapiInitialized = true;
-        resolve();
-      }).catch(err => reject(err));
-    });
-  });
-}
 
 
 
-function authenticate() {
-  return new Promise((resolve, reject) => {
-    const authInstance = gapi.auth2.getAuthInstance();
-    if (!authInstance) {
-      reject('gapi auth2 ainda não foi inicializado');
-      return;
-    }
-    authInstance.signIn({ scope: 'https://www.googleapis.com/auth/drive.file' })
-      .then(resolve)
-      .catch(reject);
-  });
-}
 
 
-async function ensureGapiInitialized() {
-  if (!gapiInitialized) {
-    await initGApi();
-  }
-}
+
+
+
 
 
 
@@ -560,12 +533,6 @@ async function exportToDrive() {
 
 
 
-function loadClient() {
-  gapi.client.setApiKey("AIzaSyCVwHA5y_x1FdfvRNY2mxZlhCIHBYGIx6U");
-  return gapi.client.load("https://content.googleapis.com/discovery/v1/apis/drive/v3/rest")
-    .then(() => console.log("GAPI client loaded for API"))
-    .catch(err => console.error("Error loading GAPI client for API", err));
-}
 
 /*gapi.load("client:auth2", () => {
   gapi.auth2.init({client_id: "177981579072-3psnkbj4tvqd6qjl4u96gl5bg0e80j9c.apps.googleusercontent.com"});
@@ -770,6 +737,35 @@ function showNotification(message, type = 'info') {
   }, 5000);
 }
 
+function handleCredentialResponse(response) {
+  // O token JWT retornado após login
+  console.log("Token JWT recebido:", response.credential);
+  
+  // Aqui você pode enviar o token para sua API ou usá-lo para autenticação
+}
+
+function initializeGSI() {
+  google.accounts.id.initialize({
+    client_id: '177981579072-3psnkbj4tvqd6qjl4u96gl5bg0e80j9c.apps.googleusercontent.com',
+    callback: handleCredentialResponse
+  });
+
+  // Renderizar botão de login automático
+  google.accounts.id.renderButton(
+    document.getElementById('gsi-button'), // um div em seu HTML
+    { theme: 'outline', size: 'large' }
+  );
+  
+  // Para mostrar prompt automaticamente (opcional)
+  // google.accounts.id.prompt();
+}
+
+// Chame esta função quando a página carregar
+window.onload = () => {
+  initializeGSI();
+};
+
+
 // Exhibition checker
 function startExhibitionChecker() {
   setInterval(() => {
@@ -793,5 +789,5 @@ function startExhibitionChecker() {
 // Initialize on load
 window.addEventListener('DOMContentLoaded', () => {
   init();
-  initGApi().then(() => console.log('GAPI Initialized')).catch(console.error);
+  initializeGSI();
 });
