@@ -572,6 +572,26 @@
       opacity: 0.7;
       margin-top: 0.25rem;
     }
+
+    .modal {
+  display: none;
+  position: fixed; 
+  z-index: 10000; 
+  left: 0; top: 0; 
+  width: 100%; height: 100%;
+  overflow: auto; 
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modal-content {
+  background-color: var(--surface);
+  margin: 10% auto;
+  padding: 20px;
+  border-radius: 8px;
+  max-width: 400px;
+  box-shadow: 0 4px 12px var(--shadow);
+}
+
   </style>
 </head>
 <body>
@@ -616,11 +636,26 @@
     </div>
   </div>
 
+    <!-- Importar JSON da Drive -->
+<div id="driveImportModal" class="modal">
+  <div class="modal-content">
+    <h3>Selecionar ficheiro JSON da Google Drive</h3>
+    <button onclick="listDriveJsonFiles()">Carregar ficheiros JSON</button>
+    <select id="driveFileList" size="8" style="width: 100%; margin-top: 10px;"></select>
+    <div style="margin-top: 10px;">
+      <button onclick="importSelectedDriveFile()">Importar Selecionado</button>
+      <button onclick="closeDriveImportModal()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
 
 
 
 <div id="gsi-button"></div>
 <button onclick="exportToDrive()">Exportar para Google Drive</button>
+<button onclick="openDriveImportModal()">Importar JSON da Drive</button>
+
       
       <div class="menu-item" onclick="openThemeModal()">
         <span class="menu-item-icon">🎨</span>
