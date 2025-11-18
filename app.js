@@ -445,7 +445,7 @@ function showExportJsonModal(jsonString) {
 
 
 
-/*function exportData() {
+function exportData() {
   const data = {
     photos: photos,
     exportDate: new Date().toISOString(),
@@ -469,7 +469,7 @@ function showExportJsonModal(jsonString) {
   URL.revokeObjectURL(url);
 
   showNotification('📤 JSON exportado! Verifique a pasta de downloads.', 'success'); 
-}*/
+}
 
 
 //let gapiInitialized = false;
