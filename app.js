@@ -478,6 +478,8 @@ function exportData() {
 
 //let gapiInitialized = false;
 
+let currentDriveAction = null;
+
 async function listDriveFiles(accessToken) {
   const query = encodeURIComponent("mimeType='application/json'");
   const response = await fetch(`https://www.googleapis.com/drive/v3/files?fields=files(id,name)&q=${query}`, {
@@ -520,20 +522,63 @@ function importDataFromDrive(fileContent) {
 }
 
 function openDriveImport() {
-  tokenClient.requestAccessToken(); // garante token
-  // No callback do tokenClient (depois de obter token):
+  if (!tokenClient) {
+    showNotification('Erro: tokenClient não inicializado.', 'error');
+    return;
+  }
+  currentDriveAction = 'import';
+  tokenClient.requestAccessToken();
+}
 
-  listDriveFiles(tokenResponse.access_token)
-    .then(files => {
-      // Renderizar lista para usuário escolher
-      // Depois que usuário escolher:
-      const chosenFileId = "/* id do arquivo escolhido */";
-      return downloadDriveFile(chosenFileId, tokenResponse.access_token);
-    })
-    .then(fileContent => {
-      importDataFromDrive(fileContent);
-    })
-    .catch(console.error);
+tokenClient = google.accounts.oauth2.initTokenClient({
+  client_id: '177981579072-3psnkbj4tvqd6qjl4u96gl5bg0e80j9c.apps.googleusercontent.com',
+  scope: 'https://www.googleapis.com/auth/drive.file',
+  callback: async (tokenResponse) => {
+    if (currentDriveAction === 'import') {
+      try {
+        const files = await listDriveFiles(tokenResponse.access_token);
+        if (files.length === 0) {
+          alert('Nenhum arquivo JSON encontrado no Drive.');
+          return;
+        }
+        showFileSelectionModal(files, tokenResponse.access_token);
+      } catch (error) {
+        console.error(error);
+        showNotification('Erro ao acessar arquivos do Drive.', 'error');
+      }
+    } else {
+      // outro fluxo, como exportação
+      uploadFileToDrive(tokenResponse.access_token);
+    }
+  }
+});
+
+
+function showFileSelectionModal(files, accessToken) {
+  const modalHtml = `
+    <div id="fileSelectionModal" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);
+      display:flex;align-items:center;justify-content:center;z-index:10000;">
+      <div style="background:#fff;padding:1rem;border-radius:8px;max-height:80%;overflow:auto;width:300px;">
+        <h3>Escolha o arquivo JSON para importar</h3>
+        <ul style="list-style:none;padding:0;">
+          ${files.map(file => `<li><button style="width:100%;text-align:left;" onclick="selectDriveFile('${file.id}', '${accessToken}')">${file.name}</button></li>`).join('')}
+        </ul>
+        <button onclick="document.getElementById('fileSelectionModal').remove()">Fechar</button>
+      </div>
+    </div>`;
+  document.body.insertAdjacentHTML('beforeend', modalHtml);
+}
+
+
+async function selectDriveFile(fileId, accessToken) {
+  try {
+    const fileContent = await downloadDriveFile(fileId, accessToken);
+    importDataFromDrive(fileContent);
+    document.getElementById('fileSelectionModal').remove();
+  } catch (error) {
+    alert('Erro ao baixar ou importar arquivo do Drive');
+    console.error(error);
+  }
 }
 
 
