@@ -472,7 +472,28 @@ function showExportJsonModal(jsonString) {
 }*/
 
 
-let gapiInitialized = false;
+//let gapiInitialized = false;
+
+
+
+
+let tokenClient;
+
+function initializeGsiTokenClient() {
+  tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: '177981579072-3psnkbj4tvqd6qjl4u96gl5bg0e80j9c.apps.googleusercontent.com',
+    scope: 'https://www.googleapis.com/auth/drive.file',
+    callback: (tokenResponse) => {
+      // tokenResponse.access_token disponível para usar
+      uploadFileToDrive(tokenResponse.access_token);
+    },
+  });
+}
+
+window.onload = () => {
+  initializeGSI(); // seu login do gsi existente
+  initializeGsiTokenClient(); // inicializa token client para Drive
+};
 
 
 
@@ -485,32 +506,33 @@ let gapiInitialized = false;
 
 
 
+let jsonString = ''; // Variável global para armazenar o JSON a exportar
 
-
-async function exportToDrive() {
+function exportToDrive() {
   const data = {
     photos: photos,
     exportDate: new Date().toISOString(),
     version: '1.0'
   };
-  const jsonString = JSON.stringify(data, null, 2);
+  jsonString = JSON.stringify(data, null, 2);
+
+  // Solicita token OAuth 2.0 para o escopo do Drive
+  tokenClient.requestAccessToken();
+}
+
+// Função para fazer o upload ao Google Drive após receber token
+async function uploadFileToDrive(accessToken) {
+  const fileMetadata = {
+    name: `inventario-fotos-${new Date().toISOString().split('T')[0]}.json`,
+    mimeType: 'application/json'
+  };
+  const fileContent = new Blob([jsonString], { type: 'application/json' });
+
+  const form = new FormData();
+  form.append('metadata', new Blob([JSON.stringify(fileMetadata)], { type: 'application/json' }));
+  form.append('file', fileContent);
 
   try {
-    // Autenticar usuário e obter token de acesso
-    await ensureGapiInitialized();
-    const user = await authenticate();
-    const accessToken = user.getAuthResponse().access_token;
-
-    const fileMetadata = {
-      name: `inventario-fotos-${new Date().toISOString().split('T')[0]}.json`,
-      mimeType: 'application/json'
-    };
-    const fileContent = new Blob([jsonString], { type: 'application/json' });
-
-    const form = new FormData();
-    form.append('metadata', new Blob([JSON.stringify(fileMetadata)], { type: 'application/json' }));
-    form.append('file', fileContent);
-
     const response = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
       method: 'POST',
       headers: new Headers({ 'Authorization': 'Bearer ' + accessToken }),
@@ -528,6 +550,7 @@ async function exportToDrive() {
     showNotification('❌ Erro ao exportar para Google Drive.', 'error');
   }
 }
+
 
 
 
