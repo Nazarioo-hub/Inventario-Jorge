@@ -481,7 +481,6 @@ function exportData() {
 let currentDriveAction = null;
 
 
-
 async function listDriveFiles(accessToken) {
   const query = encodeURIComponent("mimeType='application/json'");
   const response = await fetch(`https://www.googleapis.com/drive/v3/files?fields=files(id,name)&q=${query}`, {
@@ -595,23 +594,10 @@ function initializeGsiTokenClient() {
   tokenClient = google.accounts.oauth2.initTokenClient({
     client_id: '177981579072-3psnkbj4tvqd6qjl4u96gl5bg0e80j9c.apps.googleusercontent.com',
     scope: 'https://www.googleapis.com/auth/drive.file',
-    callback: async (tokenResponse) => {
-      if (currentDriveAction === 'import') {
-        try {
-          const files = await listDriveFiles(tokenResponse.access_token);
-          if (files.length === 0) {
-            alert('Nenhum arquivo JSON encontrado no Drive.');
-            return;
-          }
-          showFileSelectionModal(files, tokenResponse.access_token);
-        } catch (error) {
-          console.error(error);
-          showNotification('Erro ao acessar arquivos do Drive.', 'error');
-        }
-      } else { // exportação
-        uploadFileToDrive(tokenResponse.access_token);
-      }
-    }
+    callback: (tokenResponse) => {
+      // tokenResponse.access_token disponível para usar
+      uploadFileToDrive(tokenResponse.access_token);
+    },
   });
 }
 
