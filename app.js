@@ -516,22 +516,27 @@ function importDataFromDrive(fileContent) {
 }
 
 function openDriveImport() {
-  tokenClient.requestAccessToken(); // garante token
-  // No callback do tokenClient (depois de obter token):
-
-  listDriveFiles(tokenResponse.access_token)
-    .then(files => {
-      // Renderizar lista para usuário escolher
-      // Depois que usuário escolher:
-      const chosenFileId = "/* id do arquivo escolhido */";
-      return downloadDriveFile(chosenFileId, tokenResponse.access_token);
-    })
-    .then(fileContent => {
-      importDataFromDrive(fileContent);
-    })
-    .catch(console.error);
+  if (!tokenClient) {
+    showNotification('Erro: tokenClient não inicializado.', 'error');
+    return;
+  }
+  tokenClient.requestAccessToken(); // iniciar fluxo de autorização
 }
 
+
+async function tokenClientCallback(tokenResponse) {
+  try {
+    const files = await listDriveFiles(tokenResponse.access_token);
+    if (files.length === 0) {
+      alert('Nenhum arquivo JSON encontrado no Drive.');
+      return;
+    }
+    showFileSelectionModal(files, tokenResponse.access_token); // Interface para usuário escolher arquivo
+  } catch (error) {
+    console.error(error);
+    showNotification('Erro ao acessar arquivos do Drive.', 'error');
+  }
+}
 
 
 
