@@ -292,23 +292,6 @@ function renderPhotos() {
   }
 }
 
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  someAsyncFunction().then(result => {
-    sendResponse(result);
-  }).catch(error => {
-    sendResponse({ error: error.message });
-  });
-  return true; // mantém canal aberto para enviar resposta assíncrona
-});
-
-
-self.addEventListener('message', (event) => {
-  asyncOperation(event.data).then(result => {
-    event.ports[0].postMessage(result);
-  }).catch(err => {
-    event.ports[0].postMessage({ error: err.message });
-  });
-});
 
 
 
@@ -316,7 +299,7 @@ self.addEventListener('message', (event) => {
 function createPhotoCard(photo, isExhibition = false) {
   const sizeLabels = {
     'pequeno': 'Pequeno',
-    'medio': 'Médio', 
+    'medio': 'Médio',
     'grande': 'Grande'
   };
   
@@ -541,11 +524,8 @@ function openDriveImport() {
     showNotification('Erro: tokenClient não inicializado.', 'error');
     return;
   }
-  currentDriveAction = 'import';
-  tokenClient.requestAccessToken();
+  tokenClient.requestAccessToken(); // iniciar fluxo de autorização
 }
-
-let currentDriveAction = null;
 
 
 async function tokenClientCallback(tokenResponse) {
@@ -587,27 +567,20 @@ window.onload = () => {
 let jsonString = ''; // Variável global para armazenar o JSON a exportar
 
 function exportToDrive() {
-  if (!tokenClient) {
+  if (!tokenClient){
     showNotification('Erro tokenClient não inicializado', 'error');
-    return;
   }
-  currentDriveAction = 'export';
   
-  // Prepare jsonString para exportar...
+  const data = {
+    photos: photos,
+    exportDate: new Date().toISOString(),
+    version: '1.0'
+  };
+  jsonString = JSON.stringify(data, null, 2);
+
+  // Solicita token OAuth 2.0 para o escopo do Drive
   tokenClient.requestAccessToken();
 }
-
-tokenClient = google.accounts.oauth2.initTokenClient({
-  client_id: '177981579072-3psnkbj4tvqd6qjl4u96gl5bg0e80j9c.apps.googleusercontent.com',
-  scope: 'https://www.googleapis.com/auth/drive.file',
-  callback: (tokenResponse) => {
-    if (currentDriveAction === 'import') {
-      tokenClientCallback(tokenResponse); // lista e abre modal
-    } else if (currentDriveAction === 'export') {
-      uploadFileToDrive(tokenResponse.access_token);
-    }
-  },
-});
 
 // Função para fazer o upload ao Google Drive após receber token
 async function uploadFileToDrive(accessToken) {
