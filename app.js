@@ -292,6 +292,27 @@ function renderPhotos() {
   }
 }
 
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  someAsyncFunction().then(result => {
+    sendResponse(result);
+  }).catch(error => {
+    sendResponse({ error: error.message });
+  });
+  return true; // mantém canal aberto para enviar resposta assíncrona
+});
+
+
+self.addEventListener('message', (event) => {
+  asyncOperation(event.data).then(result => {
+    event.ports[0].postMessage(result);
+  }).catch(err => {
+    event.ports[0].postMessage({ error: err.message });
+  });
+});
+
+
+
+
 function createPhotoCard(photo, isExhibition = false) {
   const sizeLabels = {
     'pequeno': 'Pequeno',
