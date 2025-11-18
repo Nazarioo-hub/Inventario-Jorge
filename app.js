@@ -495,20 +495,13 @@ window.onload = () => {
   initializeGsiTokenClient(); // inicializa token client para Drive
 };
 
-
-
-
-
-
-
-
-
-
-
-
 let jsonString = ''; // Variável global para armazenar o JSON a exportar
 
 function exportToDrive() {
+  if (!tokenClient){
+    showNotification('Erro tokenClient não inicializado', 'error');
+  }
+  
   const data = {
     photos: photos,
     exportDate: new Date().toISOString(),
@@ -786,6 +779,7 @@ function initializeGSI() {
 // Chame esta função quando a página carregar
 window.onload = () => {
   initializeGSI();
+  initializeGsiTokenClient();
 };
 
 
