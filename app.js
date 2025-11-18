@@ -474,6 +474,66 @@ function exportData() {
 
 //let gapiInitialized = false;
 
+async function listDriveFiles(accessToken) {
+  const query = encodeURIComponent("mimeType='application/json'");
+  const response = await fetch(`https://www.googleapis.com/drive/v3/files?fields=files(id,name)&q=${query}`, {
+    headers: { 'Authorization': 'Bearer ' + accessToken }
+  });
+  if (response.ok) {
+    const data = await response.json();
+    return data.files; // array de arquivos {id, name}
+  } else {
+    throw new Error('Erro ao listar arquivos no Drive');
+  }
+}
+
+async function downloadDriveFile(fileId, accessToken) {
+  const response = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
+    headers: { 'Authorization': 'Bearer ' + accessToken }
+  });
+  if (response.ok) {
+    return await response.text(); // conteúdo do arquivo JSON
+  } else {
+    throw new Error('Erro ao baixar arquivo do Drive');
+  }
+}
+
+function importDataFromDrive(fileContent) {
+  try {
+    const data = JSON.parse(fileContent);
+    if (data.photos && Array.isArray(data.photos)) {
+      photos = data.photos;
+      savePhotosToStorage();
+      renderPhotos();
+      updateStats();
+      showNotification('📥 Dados importados com sucesso do Drive!', 'success');
+    } else {
+      alert('Formato de arquivo inválido');
+    }
+  } catch (error) {
+    alert('Erro ao processar o arquivo importado');
+  }
+}
+
+function openDriveImport() {
+  tokenClient.requestAccessToken(); // garante token
+  // No callback do tokenClient (depois de obter token):
+
+  listDriveFiles(tokenResponse.access_token)
+    .then(files => {
+      // Renderizar lista para usuário escolher
+      // Depois que usuário escolher:
+      const chosenFileId = "/* id do arquivo escolhido */";
+      return downloadDriveFile(chosenFileId, tokenResponse.access_token);
+    })
+    .then(fileContent => {
+      importDataFromDrive(fileContent);
+    })
+    .catch(console.error);
+}
+
+
+
 
 
 
