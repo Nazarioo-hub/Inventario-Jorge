@@ -198,14 +198,28 @@ function deletePhoto(id) {
   }
 }
 
+
+
+
+
 function openExhibitionModal(id) {
   currentPhotoId = id;
   const today = new Date().toISOString().split('T')[0];
   document.getElementById('exhibitionStart').value = today;
   document.getElementById('exhibitionStart').min = today;
   document.getElementById('exhibitionEnd').min = today;
+  
+  // Preenche autocomplete com nomes já usados:
+  const namesSet = new Set(photos.filter(p => p.exhibition && p.exhibition.name).map(p => p.exhibition.name));
+  const datalist = document.getElementById('exhibitionNamesList');
+  datalist.innerHTML = '';
+  namesSet.forEach(name => {
+    datalist.innerHTML += `<option value="${name}">`;
+  });
+
   document.getElementById('exhibitionModal').classList.add('active');
 }
+
 
 function closeExhibitionModal() {
   document.getElementById('exhibitionModal').classList.remove('active');
@@ -215,18 +229,21 @@ function closeExhibitionModal() {
 
 function setExhibition(event) {
   event.preventDefault();
-  
+
   const startDate = document.getElementById('exhibitionStart').value;
   const endDate = document.getElementById('exhibitionEnd').value;
-  
+  // ADICIONA ESTA LINHA:
+  const exhibitionName = document.getElementById('exhibitionName').value;
+
   if (new Date(endDate) < new Date(startDate)) {
     alert('A data de fim não pode ser anterior à data de início!');
     return;
   }
-  
+
   const photo = photos.find(p => p.id === currentPhotoId);
   if (photo) {
     photo.exhibition = {
+      name: exhibitionName, // Usa o valor correto aqui!
       start: startDate,
       end: endDate,
       notified: false
@@ -239,6 +256,7 @@ function setExhibition(event) {
     showNotification('📦 Foto adicionada à exposição!', 'success');
   }
 }
+
 
 function returnToHome(id) {
   const photo = photos.find(p => p.id === id);
@@ -307,26 +325,34 @@ function createPhotoCard(photo, isExhibition = false) {
     'medio': 'Médio',
     'grande': 'Grande'
   };
-  
+
   let countdown = '';
   let dateRange = '';
-  
+
+  // Adiciona o nome da exposição se existir
+  let expoNameHtml = '';
+  if (photo.exhibition && photo.exhibition.name) {
+    expoNameHtml = `<div class="expo-name">🏷️ Exposição: ${photo.exhibition.name}</div>`;
+  }
+
   if (photo.exhibition) {
     const now = new Date();
     const endDate = new Date(photo.exhibition.end);
     const startDate = new Date(photo.exhibition.start);
     const daysRemaining = Math.ceil((endDate - now) / (1000 * 60 * 60 * 24));
-    
+
     const startStr = new Date(photo.exhibition.start).toLocaleDateString('pt-PT');
     const endStr = new Date(photo.exhibition.end).toLocaleDateString('pt-PT');
     dateRange = `<div class="date-range">📅 ${startStr} - ${endStr}</div>`;
-    
+
     if (daysRemaining > 0) {
       countdown = `<div class="countdown active">⏰ ${daysRemaining} dias restantes</div>`;
     } else {
       countdown = `<div class="countdown">⏰ Terminada</div>`;
     }
   }
+
+  let exhibitions = [];
   
   // Usa array de tamanhos (photo.sizes) e junta-os para mostrar
   const sizeText = Array.isArray(photo.sizes) && photo.sizes.length > 0
@@ -334,30 +360,34 @@ function createPhotoCard(photo, isExhibition = false) {
   : '';
   
   const actions = isExhibition
-    ? `<button class="btn btn-secondary btn-small" onclick="returnToHome(${photo.id})">🏠 Voltar para Casa</button>
-       <button class="btn btn-danger btn-small" onclick="openDeleteConfirmModal(${photo.id})">🗑️</button>`
-    : `<button class="btn btn-primary btn-small" onclick="openExhibitionModal(${photo.id})">📦 Para Exposição</button>
-       <button class="btn btn-danger btn-small" onclick="openDeleteConfirmModal(${photo.id})">🗑️</button>`;
+  ? `<button class="btn btn-secondary btn-small" onclick="returnToHome(${photo.id})">🏠 Voltar para Casa</button>
+     <button class="btn btn-danger btn-small" onclick="openDeleteConfirmModal(${photo.id})">🗑️</button>`
+  : `<button class="btn btn-primary btn-small" onclick="openExhibitionModal(${photo.id})">📦 Para Exposição</button>
+     <button class="btn btn-danger btn-small" onclick="openDeleteConfirmModal(${photo.id})">🗑️</button>`;
   
-  return `
-    <div class="photo-card">
-      <img src="${photo.image}" alt="${photo.name}" class="photo-image" onclick="openImageModal('${photo.image}', '${photo.name}')">
-      <div class="photo-content">
-        <div class="photo-name">${photo.name}</div>
-        <div class="photo-details">
-          <div>📏 Tamanho: ${sizeText}</div>
-          <div>📍 Localização: ${photo.location}</div>
-          ${dateRange}
-        </div>
-        ${countdown}
-        <div class="photo-actions">
-          ${actions}
-        </div>
+
+return `
+  <div class="photo-card">
+    <img src="${photo.image}" alt="${photo.name}" class="photo-image" onclick="openImageModal('${photo.image}', '${photo.name}')">
+    <div class="photo-content">
+      <div class="photo-name">${photo.name}</div>
+      <div class="photo-details">
+        <div>📏 Tamanho: ${sizeText}</div>
+        <div>📍 Localização: ${photo.location}</div>
+        ${expoNameHtml}
+        ${dateRange}
+      </div>
+      ${countdown}
+      <div class="photo-actions">
+        ${actions}
       </div>
     </div>
-  `;
+  </div>
+`;
+
 }
 
+let expoNameHtml = '';
 
 
 function openImageModal(src, caption) {
