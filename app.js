@@ -651,6 +651,23 @@ if (!fileId || fileId === 'Nenhum ficheiro JSON encontrado.') {
 // Chama a tua função importJsonFromDrive com o fileId válido
 importJsonFromDrive(fileId, accessToken);
 
+function importSelectedDriveFile() {
+  const select = document.getElementById('driveFileList');
+  const fileId = select.value;
+  console.log('fileId selecionado:', fileId);
+
+  if (!fileId || fileId === 'Nenhum ficheiro JSON encontrado.') {
+    alert('Por favor, seleciona um ficheiro válido.');
+    return;
+  }
+  
+  if (!accessToken) {
+    alert('Token de acesso não disponível. Autentique-se novamente.');
+    return;
+  }
+  
+  importJsonFromDrive(fileId, accessToken);
+}
 
 
 
