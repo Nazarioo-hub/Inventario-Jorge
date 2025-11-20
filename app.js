@@ -598,24 +598,51 @@ async function listDriveJsonFiles() {
   }
 }
 
-function importSelectedDriveFile() {
+/*function importSelectedDriveFile() {
   const select = document.getElementById('driveFileList');
   const fileId = select.value;
-
+  
   if (!fileId || fileId === 'Nenhum ficheiro JSON encontrado.') {
     alert('Por favor, seleciona um ficheiro válido.');
     return;
   }
-
-  // Usa o token já guardado
+  
   if (!accessToken) {
     alert('Token de acesso não disponível. Autentique-se novamente.');
     return;
   }
-
-  // Chama a tua função de download
+  
   importJsonFromDrive(fileId, accessToken);
+}*/
+
+
+
+async function importJsonFromDrive(fileId, accessToken) {
+  try {
+    const response = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
+      headers: { 'Authorization': `Bearer ${accessToken}` }
+    });
+  
+    if (!response.ok) throw new Error('Falha ao obter ficheiro da Drive');
+    const data = await response.json();
+
+    if (data.photos && Array.isArray(data.photos)) {
+      photos = data.photos;
+      await savePhotosToStorage();
+      renderPhotos();
+      updateStats();
+      showNotification('📥 Dados importados da Drive com sucesso!', 'success');
+      closeDriveImportModal(); // Fecha modal após importar (faz implementação)
+    } else {
+      alert('Formato inválido do ficheiro JSON.');
+    }
+  } catch (error) {
+    console.error('Erro importar ficheiro:', error);
+    showNotification('❌ Falha ao importar JSON da Drive.', 'error');
+  }
 }
+
+
 
 
 
