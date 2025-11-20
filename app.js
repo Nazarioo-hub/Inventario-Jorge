@@ -478,6 +478,7 @@ function showExportJsonModal(jsonString) {
 
 
 let tokenClient;
+let accessToken = null;
 
 function initializeGsiTokenClient() {
   tokenClient = google.accounts.oauth2.initTokenClient({
@@ -556,17 +557,17 @@ function openDriveImportModal() {
 }
 
 
-let accessToken = null;
+
 
 // Função para listar ficheiros JSON da Drive
 
 async function listDriveJsonFiles() {
   if (!accessToken) {
-    // Se o token não estiver definido, solicita
+    // Pede token, depois callback chama esta função automaticamente
     tokenClient.requestAccessToken();
     return;
   }
-  // Agora podes usar a variável global accessToken
+
   try {
     const response = await fetch(
       'https://www.googleapis.com/drive/v3/files?q=mimeType="application/json"&fields=files(id,name)',
@@ -575,9 +576,25 @@ async function listDriveJsonFiles() {
       }
     );
     const data = await response.json();
-    // ... resto do código
+
+    const select = document.getElementById('driveFileList');
+    select.innerHTML = '';
+
+    if (data.files && data.files.length > 0) {
+      data.files.forEach(file => {
+        const option = document.createElement('option');
+        option.value = file.id;
+        option.textContent = file.name;
+        select.appendChild(option);
+      });
+    } else {
+      const option = document.createElement('option');
+      option.textContent = 'Nenhum ficheiro JSON encontrado.';
+      select.appendChild(option);
+    }
   } catch (error) {
     console.error('Erro ao listar ficheiros:', error);
+    alert('Erro ao listar ficheiros da Drive');
   }
 }
 
