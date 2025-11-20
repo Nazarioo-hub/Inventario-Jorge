@@ -556,15 +556,17 @@ function openDriveImportModal() {
 }
 
 
+let accessToken = null;
+
 // Função para listar ficheiros JSON da Drive
 
 async function listDriveJsonFiles() {
   if (!accessToken) {
-    // Se não tiver token, pede-o
+    // Se o token não estiver definido, solicita
     tokenClient.requestAccessToken();
-    return;  // A listagem será chamada quando o token for recebido no callback
+    return;
   }
-
+  // Agora podes usar a variável global accessToken
   try {
     const response = await fetch(
       'https://www.googleapis.com/drive/v3/files?q=mimeType="application/json"&fields=files(id,name)',
@@ -572,28 +574,13 @@ async function listDriveJsonFiles() {
         headers: { 'Authorization': `Bearer ${accessToken}` }
       }
     );
-
     const data = await response.json();
-    const select = document.getElementById('driveFileList');
-    select.innerHTML = '';
-
-    if (data.files && data.files.length > 0) {
-      data.files.forEach(file => {
-        const option = document.createElement('option');
-        option.value = file.id;
-        option.textContent = file.name;
-        select.appendChild(option);
-      });
-    } else {
-      const option = document.createElement('option');
-      option.textContent = 'Nenhum ficheiro JSON encontrado.';
-      select.appendChild(option);
-    }
+    // ... resto do código
   } catch (error) {
     console.error('Erro ao listar ficheiros:', error);
-    alert('Falha ao listar ficheiros da Drive.');
   }
 }
+
 
 
 
