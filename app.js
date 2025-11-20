@@ -598,6 +598,26 @@ async function listDriveJsonFiles() {
   }
 }
 
+function importSelectedDriveFile() {
+  const select = document.getElementById('driveFileList');
+  const fileId = select.value;
+
+  if (!fileId || fileId === 'Nenhum ficheiro JSON encontrado.') {
+    alert('Por favor, seleciona um ficheiro válido.');
+    return;
+  }
+
+  // Usa o token já guardado
+  if (!accessToken) {
+    alert('Token de acesso não disponível. Autentique-se novamente.');
+    return;
+  }
+
+  // Chama a tua função de download
+  importJsonFromDrive(fileId, accessToken);
+}
+
+
 
 
 
