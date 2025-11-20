@@ -208,7 +208,7 @@ function openExhibitionModal(id) {
   document.getElementById('exhibitionStart').value = today;
   document.getElementById('exhibitionStart').min = today;
   document.getElementById('exhibitionEnd').min = today;
-  
+
   // Preenche autocomplete com nomes já usados:
   const namesSet = new Set(photos.filter(p => p.exhibition && p.exhibition.name).map(p => p.exhibition.name));
   const datalist = document.getElementById('exhibitionNamesList');
@@ -217,8 +217,29 @@ function openExhibitionModal(id) {
     datalist.innerHTML += `<option value="${name}">`;
   });
 
+  // NOVO: mostrar tamanhos para seleção se houver mais que um tamanho
+  const photo = photos.find(p => p.id === id);
+  const sizesGroup = document.getElementById('exhibitionSizesGroup');
+  const sizesContainer = document.getElementById('exhibitionSizesContainer');
+  const sizeLabels = { pequeno: 'Pequeno', medio: 'Médio', grande: 'Grande' };
+  sizesContainer.innerHTML = '';
+  if (photo && Array.isArray(photo.sizes) && photo.sizes.length > 1) {
+    sizesGroup.style.display = '';
+    photo.sizes.forEach(size => {
+      sizesContainer.innerHTML += `
+        <label>
+          <input type="checkbox" name="expoSizes" value="${size}" checked>
+          ${sizeLabels[size] || size}
+        </label><br>
+      `;
+    });
+  } else {
+    sizesGroup.style.display = 'none';
+  }
+
   document.getElementById('exhibitionModal').classList.add('active');
 }
+
 
 
 function closeExhibitionModal() {
@@ -232,30 +253,53 @@ function setExhibition(event) {
 
   const startDate = document.getElementById('exhibitionStart').value;
   const endDate = document.getElementById('exhibitionEnd').value;
-  // ADICIONA ESTA LINHA:
   const exhibitionName = document.getElementById('exhibitionName').value;
+  const sizeCheckboxes = document.querySelectorAll('input[name="expoSizes"]:checked');
+  const selectedSizes = Array.from(sizeCheckboxes).map(cb => cb.value);
 
   if (new Date(endDate) < new Date(startDate)) {
     alert('A data de fim não pode ser anterior à data de início!');
     return;
   }
-
+  
   const photo = photos.find(p => p.id === currentPhotoId);
   if (photo) {
-    photo.exhibition = {
-      name: exhibitionName, // Usa o valor correto aqui!
-      start: startDate,
-      end: endDate,
-      notified: false
+    // 1. Criar nova foto para a exposição só com os tamanhos escolhidos
+    const newPhoto = {
+      ...photo,
+      id: Date.now(), // novo ID para não colidir
+      sizes: selectedSizes,
+      location: 'Exposição',
+      exhibition: {
+        name: exhibitionName,
+        start: startDate,
+        end: endDate,
+        sizes: selectedSizes, // regista tamanhos na exposição para histórico futuro, se quiseres
+        notified: false
+      }
     };
-    photo.location = 'Exposição';
+    photos.push(newPhoto);
+
+    // 2. Remover tamanhos selecionados da foto original
+    const remainingSizes = photo.sizes.filter(size => !selectedSizes.includes(size));
+    if (remainingSizes.length === 0) {
+      // Todos os tamanhos foram transferidos — apaga a foto original
+      const index = photos.indexOf(photo);
+      if (index !== -1) photos.splice(index, 1);
+    } else {
+      // Atualiza a foto original apenas com os tamanhos que ficam em casa
+      photo.sizes = remainingSizes;
+    }
+
     savePhotosToStorage();
     renderPhotos();
     updateStats();
     closeExhibitionModal();
-    showNotification('📦 Foto adicionada à exposição!', 'success');
+    showNotification('📦 Tamanho transferido para exposição!', 'success');
   }
 }
+
+
 
 
 function returnToHome(id) {
