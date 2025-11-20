@@ -738,13 +738,14 @@
             <input type="text" class="form-input" id="photoName" required>
           </div>
           <div class="form-group">
-            <label class="form-label">Tamanho</label>
-            <select class="form-select" id="photoSize" required>
-              <option value="pequeno">Pequeno</option>
-              <option value="medio">Médio</option>
-              <option value="grande">Grande</option>
-            </select>
-          </div>
+  <label class="form-label">[translate:Tamanho]</label>
+  <div>
+    <label><input type="checkbox" name="photoSize" value="pequeno"> [translate:Pequeno]</label>
+    <label><input type="checkbox" name="photoSize" value="medio"> [translate:Médio]</label>
+    <label><input type="checkbox" name="photoSize" value="grande"> [translate:Grande]</label>
+  </div>
+</div>
+      
           <div class="form-group">
             <label class="form-label">Localização</label>
             <input type="text" class="form-input" id="photoLocation" value="Casa" required>

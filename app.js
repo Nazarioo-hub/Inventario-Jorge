@@ -162,7 +162,7 @@ function addPhoto(event) {
     const photo = {
       id: Date.now(),
       name: document.getElementById('photoName').value,
-      size: document.getElementById('photoSize').value,
+      sizes: getSelectedSizes(),
       location: document.getElementById('photoLocation').value,
       image: e.target.result,
       dateAdded: new Date().toISOString(),
@@ -178,6 +178,15 @@ function addPhoto(event) {
   };
   reader.readAsDataURL(file);
 }
+
+
+function getSelectedSizes() {
+  const checkboxes = document.querySelectorAll('input[name="photoSize"]:checked');
+  return Array.from(checkboxes).map(cb => cb.value);
+}
+
+
+
 
 function deletePhoto(id) {
   if (confirm('Tem certeza que deseja eliminar esta foto?')) {
@@ -319,6 +328,11 @@ function createPhotoCard(photo, isExhibition = false) {
     }
   }
   
+  // Usa array de tamanhos (photo.sizes) e junta-os para mostrar
+  const sizeText = Array.isArray(photo.sizes) && photo.sizes.length > 0
+  ? photo.sizes.map(size => sizeLabels[size]).join(', ')
+  : '';
+  
   const actions = isExhibition
     ? `<button class="btn btn-secondary btn-small" onclick="returnToHome(${photo.id})">🏠 Voltar para Casa</button>
        <button class="btn btn-danger btn-small" onclick="openDeleteConfirmModal(${photo.id})">🗑️</button>`
@@ -331,7 +345,7 @@ function createPhotoCard(photo, isExhibition = false) {
       <div class="photo-content">
         <div class="photo-name">${photo.name}</div>
         <div class="photo-details">
-          <div>📏 Tamanho: ${sizeLabels[photo.size]}</div>
+          <div>📏 Tamanho: ${sizeText}</div>
           <div>📍 Localização: ${photo.location}</div>
           ${dateRange}
         </div>
@@ -343,6 +357,7 @@ function createPhotoCard(photo, isExhibition = false) {
     </div>
   `;
 }
+
 
 
 function openImageModal(src, caption) {
