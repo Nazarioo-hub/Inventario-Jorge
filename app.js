@@ -563,6 +563,12 @@ async function listDriveJsonFiles() {
     }
   );
 
+
+  function openDriveImportModal() {
+  document.getElementById('driveImportModal').style.display = 'block';
+  }
+
+
   const data = await response.json();
 
   // Renderiza os nomes e ids no select do modal
