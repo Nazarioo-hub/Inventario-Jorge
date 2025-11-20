@@ -485,7 +485,11 @@ function initializeGsiTokenClient() {
     scope: 'https://www.googleapis.com/auth/drive.file',
     callback: (tokenResponse) => {
       // tokenResponse.access_token disponível para usar
+      accessToken = tokenResponse.access_token;
+      console.log("Token OAuth recebido:", accessToken)
+      listDriveJsonFiles();
       uploadFileToDrive(tokenResponse.access_token);
+
     },
   });
 }
@@ -555,39 +559,42 @@ function openDriveImportModal() {
 // Função para listar ficheiros JSON da Drive
 
 async function listDriveJsonFiles() {
-  const accessToken = tokenClient?.access_token;
   if (!accessToken) {
-    alert('Token de acesso não disponível. Autentique-se!');
-    return;
+    // Se não tiver token, pede-o
+    tokenClient.requestAccessToken();
+    return;  // A listagem será chamada quando o token for recebido no callback
   }
 
-   const response = await fetch(
-    'https://www.googleapis.com/drive/v3/files?q=mimeType="application/json"&fields=files(id,name)',
-    {
-      headers: { 'Authorization': `Bearer ${accessToken}` }
-    }
-  );
+  try {
+    const response = await fetch(
+      'https://www.googleapis.com/drive/v3/files?q=mimeType="application/json"&fields=files(id,name)',
+      {
+        headers: { 'Authorization': `Bearer ${accessToken}` }
+      }
+    );
 
     const data = await response.json();
+    const select = document.getElementById('driveFileList');
+    select.innerHTML = '';
 
-
-  const select = document.getElementById('driveFileList');
-  select.innerHTML = '';
-
-
-  if (data.files && data.files.length > 0) {
-    data.files.forEach(file => {
+    if (data.files && data.files.length > 0) {
+      data.files.forEach(file => {
+        const option = document.createElement('option');
+        option.value = file.id;
+        option.textContent = file.name;
+        select.appendChild(option);
+      });
+    } else {
       const option = document.createElement('option');
-      option.value = file.id;
-      option.textContent = file.name;
+      option.textContent = 'Nenhum ficheiro JSON encontrado.';
       select.appendChild(option);
-    });
-  } else {
-    const option = document.createElement('option');
-    option.textContent = 'Nenhum ficheiro JSON encontrado.';
-    select.appendChild(option);
+    }
+  } catch (error) {
+    console.error('Erro ao listar ficheiros:', error);
+    alert('Falha ao listar ficheiros da Drive.');
   }
 }
+
 
 
 
