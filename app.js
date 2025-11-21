@@ -446,24 +446,29 @@ function closeImageModal() {
 }
 
 
-
-
-
-
-
-
-
 function updateStats() {
-  const total = photos.length;
-  const small = photos.filter(p => p.size === 'pequeno').length;
-  const medium = photos.filter(p => p.size === 'medio').length;
-  const large = photos.filter(p => p.size === 'grande').length;
-  
+  let total = 0;
+  let small = 0;
+  let medium = 0;
+  let large = 0;
+
+  photos.forEach(photo => {
+    if (Array.isArray(photo.sizes)) {
+      photo.sizes.forEach(size => {
+        total++;
+        if (size === 'pequeno') small++;
+        else if (size === 'medio') medium++;
+        else if (size === 'grande') large++;
+      });
+    }
+  });
+
   document.getElementById('totalPhotos').textContent = total;
   document.getElementById('smallCount').textContent = small;
   document.getElementById('mediumCount').textContent = medium;
   document.getElementById('largeCount').textContent = large;
 }
+
 
 function scrollToStats() {
   closeMenu();
