@@ -470,6 +470,80 @@ function updateStats() {
 }
 
 
+
+
+// Array para guardar fotos selecionadas para separação
+let separationPhotos = [];
+
+// Função para adicionar foto a separação (chama no clique de selecionar uma foto)
+function addToSeparation(photoId) {
+  if (!separationPhotos.includes(photoId)) {
+    separationPhotos.push(photoId);
+    renderSeparationArea();
+  }
+}
+
+// Renderiza área de separação
+function renderSeparationArea() {
+  const area = document.getElementById('separationArea');
+  const list = document.getElementById('separationList');
+
+  if (separationPhotos.length === 0) {
+    area.style.display = 'none';
+    list.innerHTML = '';
+    return;
+  }
+
+  area.style.display = 'block';
+  list.innerHTML = '';
+
+  separationPhotos.forEach(id => {
+    const photo = photos.find(p => p.id === id);
+    if (!photo) return;
+
+    const div = document.createElement('div');
+    div.style.display = 'flex';
+    div.style.justifyContent = 'space-between';
+    div.style.alignItems = 'center';
+    div.style.marginBottom = '0.5rem';
+
+    div.innerHTML = `
+      <span>${photo.name} (Tamanhos: ${photo.sizes.map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(', ')})</span>
+      <button onclick="confirmSeparationPhoto(${id})" title="Mover para Exposição">✅️</button>
+    `;
+
+    list.appendChild(div);
+  });
+}
+
+// Confirmar mover foto para exposição
+function confirmSeparationPhoto(photoId) {
+  const photo = photos.find(p => p.id === photoId);
+  if (photo) {
+    photo.location = 'Exposição';
+    photo.exhibition = photo.exhibition || { name: '', start: '', end: '', sizes: photo.sizes, notified: false };
+    // Remove da lista de separação
+    separationPhotos = separationPhotos.filter(id => id !== photoId);
+    savePhotosToStorage();
+    renderPhotos();
+    updateStats();
+    renderSeparationArea(); // Atualiza área separação
+    showNotification(`📦 Foto "${photo.name}" movida para Exposição`, 'success');
+  }
+}
+
+// Cancelar seleção (limpar área separação)
+function clearSeparationArea() {
+  separationPhotos = [];
+  renderSeparationArea();
+}
+
+// Exemplo de botão em cada card para adicionar à separação
+// No teu createPhotoCard adiciona por exemplo:
+// <button onclick="addToSeparation(${photo.id})">Selecionar para Expo</button>
+
+
+
 function scrollToStats() {
   closeMenu();
   document.getElementById('statsSection').scrollIntoView({ behavior: 'smooth' });
