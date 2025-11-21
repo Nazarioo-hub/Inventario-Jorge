@@ -385,8 +385,8 @@ function createPhotoCard(photo, isExhibition = false) {
     const startDate = new Date(photo.exhibition.start);
     const daysRemaining = Math.ceil((endDate - now) / (1000 * 60 * 60 * 24));
 
-    const startStr = new Date(photo.exhibition.start).toLocaleDateString('pt-PT');
-    const endStr = new Date(photo.exhibition.end).toLocaleDateString('pt-PT');
+    const startStr = startDate.toLocaleDateString('pt-PT');
+    const endStr = endDate.toLocaleDateString('pt-PT');
     dateRange = `<div class="date-range">📅 ${startStr} - ${endStr}</div>`;
 
     if (daysRemaining > 0) {
@@ -396,42 +396,106 @@ function createPhotoCard(photo, isExhibition = false) {
     }
   }
 
-  let exhibitions = [];
   
+
+
+
   // Usa array de tamanhos (photo.sizes) e junta-os para mostrar
   const sizeText = Array.isArray(photo.sizes) && photo.sizes.length > 0
-  ? photo.sizes.map(size => sizeLabels[size]).join(', ')
-  : '';
-  
-  const actions = isExhibition
-  ? `<button class="btn btn-secondary btn-small" onclick="returnToHome(${photo.id})">🏠 Voltar para Casa</button>
-     <button class="btn btn-danger btn-small" onclick="openDeleteConfirmModal(${photo.id})">🗑️</button>`
-  : `<button class="btn btn-primary btn-small" onclick="openExhibitionModal(${photo.id})">📦 Para Exposição</button>
-     <button class="btn btn-danger btn-small" onclick="openDeleteConfirmModal(${photo.id})">🗑️</button>`;
-  
+    ? photo.sizes.map(size => sizeLabels[size]).join(', ')
+    : '';
 
-return `
-  <div class="photo-card">
-    <img src="${photo.image}" alt="${photo.name}" class="photo-image" onclick="openImageModal('${photo.image}', '${photo.name}')">
-    <div class="photo-content">
-      <div class="photo-name">${photo.name}</div>
-      <div class="photo-details">
-        <div>📏 Tamanho: ${sizeText}</div>
-        <div>📍 Localização: ${photo.location}</div>
-        ${expoNameHtml}
-        ${dateRange}
-      </div>
-      ${countdown}
-      <div class="photo-actions">
-        ${actions}
+  const actions = isExhibition
+    ? `<button class="btn btn-secondary btn-small" onclick="returnToHome(${photo.id})">🏠 Voltar para Casa</button>
+       <button class="btn btn-danger btn-small" onclick="openDeleteConfirmModal(${photo.id})">🗑️</button>`
+    : `<button onclick="addToSeparation(${photo.id})" class="btn btn-secondary btn-small">Selecionar para Expo</button>
+       <button class="btn btn-primary btn-small" onclick="openExhibitionModal(${photo.id})">📦 Para Exposição</button>
+       <button class="btn btn-danger btn-small" onclick="openDeleteConfirmModal(${photo.id})">🗑️</button>`;
+
+  return `
+    <div class="photo-card">
+      <img src="${photo.image}" alt="${photo.name}" class="photo-image" onclick="openImageModal('${photo.image}', '${photo.name}')">
+      <div class="photo-content">
+        <div class="photo-name">${photo.name}</div>
+        <div class="photo-details">
+          <div>📏 Tamanho: ${sizeText}</div>
+          <div>📍 Localização: ${photo.location}</div>
+          ${expoNameHtml}
+          ${dateRange}
+        </div>
+        ${countdown}
+        <div class="photo-actions">
+          ${actions}
+        </div>
       </div>
     </div>
-  </div>
-`;
-
+  `;
 }
 
+
 let expoNameHtml = '';
+
+
+let separationPhotos = [];
+
+function addToSeparation(photoId) {
+  if (!separationPhotos.includes(photoId)) {
+    separationPhotos.push(photoId);
+    renderSeparationArea();
+  }
+}
+
+function renderSeparationArea() {
+  const area = document.getElementById('separationArea');
+  const list = document.getElementById('separationList');
+
+  if (separationPhotos.length === 0) {
+    area.style.display = 'none';
+    list.innerHTML = '';
+    return;
+  }
+
+  area.style.display = 'block';
+  list.innerHTML = '';
+
+  separationPhotos.forEach(id => {
+    const photo = photos.find(p => p.id === id);
+    if (!photo) return;
+
+    const div = document.createElement('div');
+    div.style.display = 'flex';
+    div.style.justifyContent = 'space-between';
+    div.style.alignItems = 'center';
+    div.style.marginBottom = '0.5rem';
+
+    div.innerHTML = `
+      <span>${photo.name} (Tamanhos: ${photo.sizes.map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(', ')})</span>
+      <button onclick="confirmSeparationPhoto(${id})" title="Mover para Exposição">✅️</button>
+    `;
+
+    list.appendChild(div);
+  });
+}
+
+function confirmSeparationPhoto(photoId) {
+  const photo = photos.find(p => p.id === photoId);
+  if (photo) {
+    photo.location = 'Exposição';
+    photo.exhibition = photo.exhibition || { name: '', start: '', end: '', sizes: photo.sizes, notified: false };
+    separationPhotos = separationPhotos.filter(id => id !== photoId);
+    savePhotosToStorage();
+    renderPhotos();
+    updateStats();
+    renderSeparationArea();
+    showNotification(`📦 Foto "${photo.name}" movida para Exposição`, 'success');
+  }
+}
+
+function clearSeparationArea() {
+  separationPhotos = [];
+  renderSeparationArea();
+}
+
 
 
 function openImageModal(src, caption) {
@@ -472,75 +536,6 @@ function updateStats() {
 
 
 
-// Array para guardar fotos selecionadas para separação
-let separationPhotos = [];
-
-// Função para adicionar foto a separação (chama no clique de selecionar uma foto)
-function addToSeparation(photoId) {
-  if (!separationPhotos.includes(photoId)) {
-    separationPhotos.push(photoId);
-    renderSeparationArea();
-  }
-}
-
-// Renderiza área de separação
-function renderSeparationArea() {
-  const area = document.getElementById('separationArea');
-  const list = document.getElementById('separationList');
-
-  if (separationPhotos.length === 0) {
-    area.style.display = 'none';
-    list.innerHTML = '';
-    return;
-  }
-
-  area.style.display = 'block';
-  list.innerHTML = '';
-
-  separationPhotos.forEach(id => {
-    const photo = photos.find(p => p.id === id);
-    if (!photo) return;
-
-    const div = document.createElement('div');
-    div.style.display = 'flex';
-    div.style.justifyContent = 'space-between';
-    div.style.alignItems = 'center';
-    div.style.marginBottom = '0.5rem';
-
-    div.innerHTML = `
-      <span>${photo.name} (Tamanhos: ${photo.sizes.map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(', ')})</span>
-      <button onclick="confirmSeparationPhoto(${id})" title="Mover para Exposição">✅️</button>
-    `;
-
-    list.appendChild(div);
-  });
-}
-
-// Confirmar mover foto para exposição
-function confirmSeparationPhoto(photoId) {
-  const photo = photos.find(p => p.id === photoId);
-  if (photo) {
-    photo.location = 'Exposição';
-    photo.exhibition = photo.exhibition || { name: '', start: '', end: '', sizes: photo.sizes, notified: false };
-    // Remove da lista de separação
-    separationPhotos = separationPhotos.filter(id => id !== photoId);
-    savePhotosToStorage();
-    renderPhotos();
-    updateStats();
-    renderSeparationArea(); // Atualiza área separação
-    showNotification(`📦 Foto "${photo.name}" movida para Exposição`, 'success');
-  }
-}
-
-// Cancelar seleção (limpar área separação)
-function clearSeparationArea() {
-  separationPhotos = [];
-  renderSeparationArea();
-}
-
-// Exemplo de botão em cada card para adicionar à separação
-// No teu createPhotoCard adiciona por exemplo:
-// <button onclick="addToSeparation(${photo.id})">Selecionar para Expo</button>
 
 
 
