@@ -610,13 +610,69 @@
       
 
 
-      <div class="modal" id="imageModal">
-        <div class="modal-content" style="max-width: 90vw; max-height: 90vh;">
-          <span class="modal-close" onclick="closeImageModal()" style="cursor:pointer; font-size:2rem;">&times;</span>
-          <img id="modalImg" src="" alt="" style="display:block; max-width:100%; max-height:80vh; margin:0 auto;">
-      <div id="modalImgCaption" style="text-align:center; margin-top:1rem;"></div>
+      <!-- Modal para mover múltiplas fotos para exposição -->
+<div class="modal" id="multiExhibitionModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <div class="modal-title">Mover Selecionadas para Exposição</div>
+      <button class="modal-close" onclick="closeMultiExhibitionModal()">&times;</button>
     </div>
+    <div class="modal-body">
+  <form id="multiExhibitionForm" onsubmit="prepareMoveSelectedPhotos(event)">
+    <!-- Campos para nome e datas -->
+    <div class="form-group">
+      <label class="form-label">Nome da Exposição</label>
+      <input type="text" class="form-input" id="exhibitionNameGlobal" required>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Data de Início</label>
+      <input type="date" class="form-input" id="exhibitionStartGlobal" required>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Data de Fim</label>
+      <input type="date" class="form-input" id="exhibitionEndGlobal" required>
+    </div>
+    <!-- Escolha dos tamanhos -->
+    <div id="selectedPhotosSizesContainer" style="max-height: 300px; overflow-y: auto; border: 1px solid var(--border); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;"></div>
+    <button type="submit" class="btn btn-primary" style="width: 100%;">Pré-confirmar Movimento</button>
+  </form>
+
+  <!-- Área para mostrar ações pendentes -->
+  <div id="pendingActionsSection" style="display:none; margin-top: 1rem; padding: 1rem; border: 1px solid var(--border); border-radius: 8px;">
+    <h3>Ações Pendentes</h3>
+    <div id="pendingActionsList"></div>
+    <button class="btn btn-success" onclick="confirmMoveActions()" style="margin-top: 1rem;">Confirmar Movimentos</button>
+    <button class="btn btn-secondary" onclick="cancelMoveActions()" style="margin-left: 1rem;">Cancelar</button>
   </div>
+</div>
+
+
+
+    <!--<div class="modal-body">
+      <form id="multiExhibitionForm" onsubmit="confirmMoveSelectedPhotos(event)">
+        <div class="form-group">
+          <label class="form-label">Nome da Exposição</label>
+          <input type="text" class="form-input" id="exhibitionNameGlobal" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Data de Início</label>
+          <input type="date" class="form-input" id="exhibitionStartGlobal" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Data de Fim</label>
+          <input type="date" class="form-input" id="exhibitionEndGlobal" required>
+        </div>
+        <div id="selectedPhotosSizesContainer" style="max-height: 300px; overflow-y: auto; border: 1px solid var(--border); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;"></div>
+        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Confirmar Movimento</button>
+      </form>
+    </div> -->
+  </div>
+</div> 
+
+<!-- Botão na área de separação -->
+<button class="btn btn-primary" onclick="openMoveSelectedModal()">Mover para Exposição ⏩</button>
+
+
 
 
 
