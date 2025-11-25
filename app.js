@@ -1146,48 +1146,87 @@ function exportExhibitionPDF() {
   
   let y = 40;
   
-  exhibitionPhotos.forEach((photo, index) => {
-    if (y > 250) {
+  // Agrupa fotos por nome da exposição
+  const grouped = {};
+  exhibitionPhotos.forEach(photo => {
+    const expoName = photo.exhibition?.name || 'Sem nome';
+    if (!grouped[expoName]) grouped[expoName] = [];
+    grouped[expoName].push(photo);
+  });
+
+  // Renderiza cada grupo (exposição)
+  Object.entries(grouped).forEach(([expoName, groupPhotos]) => {
+    // Adiciona título da exposição
+    if (y > 240) {
       doc.addPage();
       y = 20;
     }
     
-    doc.setFontSize(12);
+    doc.setFontSize(14);
     doc.setFont(undefined, 'bold');
-    doc.text(`${index + 1}. ${photo.name}`, 20, y);
+    doc.text(`📦 Exposição: ${expoName}`, 20, y);
+    y += 10;
     
     doc.setFont(undefined, 'normal');
     doc.setFontSize(10);
-    y += 7;
-    
-    const sizeLabels = { 'pequeno': 'Pequeno', 'medio': 'Médio', 'grande': 'Grande' };
-    doc.text(`   Tamanho: ${sizeLabels[photo.size]}`, 20, y);
-    y += 6;
-    
-    if (photo.exhibition) {
-      const startStr = new Date(photo.exhibition.start).toLocaleDateString('pt-PT');
-      const endStr = new Date(photo.exhibition.end).toLocaleDateString('pt-PT');
-      doc.text(`   Período: ${startStr} - ${endStr}`, 20, y);
-      y += 6;
-    }
-    
-    // Try to add image
-    try {
-      if (photo.image) {
-        doc.addImage(photo.image, 'JPEG', 20, y, 40, 30);
-        y += 35;
+
+    // Renderiza as fotos desta exposição
+    groupPhotos.forEach((photo, index) => {
+      if (y > 250) {
+        doc.addPage();
+        y = 20;
       }
-    } catch (error) {
-      doc.text('   [Imagem não disponível]', 20, y);
-      y += 10;
-    }
-    
-    y += 5;
+      
+      doc.setFontSize(12);
+      doc.setFont(undefined, 'bold');
+      doc.text(`${index + 1}. ${photo.name}`, 20, y);
+      
+      doc.setFont(undefined, 'normal');
+      doc.setFontSize(10);
+      y += 7;
+      
+      // Tamanhos
+      const sizeLabels = { 'pequeno': 'Pequeno', 'medio': 'Médio', 'grande': 'Grande' };
+      let sizesText = '';
+      if (Array.isArray(photo.sizes) && photo.sizes.length > 0) {
+        sizesText = photo.sizes.map(sz => sizeLabels[sz] || sz).join(', ');
+      } else if (photo.size) {
+        sizesText = sizeLabels[photo.size] || photo.size;
+      }
+      doc.text(`   Tamanho: ${sizesText}`, 20, y);
+      y += 6;
+      
+      // Período
+      if (photo.exhibition) {
+        const startStr = new Date(photo.exhibition.start).toLocaleDateString('pt-PT');
+        const endStr = new Date(photo.exhibition.end).toLocaleDateString('pt-PT');
+        doc.text(`   Período: ${startStr} - ${endStr}`, 20, y);
+        y += 6;
+      }
+      
+      // Imagem
+      try {
+        if (photo.image) {
+          doc.addImage(photo.image, 'JPEG', 20, y, 40, 30);
+          y += 35;
+        }
+      } catch (error) {
+        doc.text('   [Imagem não disponível]', 20, y);
+        y += 10;
+      }
+      
+      y += 5;
+    });
+
+    // Espaço entre grupos
+    y += 10;
   });
   
   doc.save(`exposicao-${new Date().toISOString().split('T')[0]}.pdf`);
   showNotification('📄 PDF exportado com sucesso!', 'success');
 }
+
+
 
 
 // Notifications
