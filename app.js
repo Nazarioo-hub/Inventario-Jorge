@@ -297,8 +297,9 @@ function addPhoto(event) {
 
 function getSelectedSizes() {
   const checkboxes = document.querySelectorAll('input[name="photoSize"]:checked');
-  return Array.from(checkboxes).map(cb => cb.value);
+  return Array.from(checkboxes).map(cb => cb.value).filter(Boolean);
 }
+
 
 
 
@@ -335,22 +336,23 @@ function openExhibitionModal(id) {
   // NOVO: mostrar tamanhos para seleção se houver mais que um tamanho
   const photo = photos.find(p => p.id === id);
   const sizesGroup = document.getElementById('exhibitionSizesGroup');
-  const sizesContainer = document.getElementById('exhibitionSizesContainer');
-  const sizeLabels = { pequeno: 'Pequeno', medio: 'Médio', grande: 'Grande' };
-  sizesContainer.innerHTML = '';
-  if (photo && Array.isArray(photo.sizes) && photo.sizes.length > 1) {
-    sizesGroup.style.display = '';
-    photo.sizes.forEach(size => {
-      sizesContainer.innerHTML += `
-        <label>
-          <input type="checkbox" name="expoSizes" value="${size}" checked>
-          ${sizeLabels[size] || size}
-        </label><br>
-      `;
-    });
-  } else {
-    sizesGroup.style.display = 'none';
-  }
+const sizesContainer = document.getElementById('exhibitionSizesContainer');
+const sizeLabels = { pequeno: 'Pequeno', medio: 'Médio', grande: 'Grande' };
+sizesContainer.innerHTML = '';
+if (photo && Array.isArray(photo.sizes) && photo.sizes.length > 0) { // <--- deve ser >0, não >1!
+  sizesGroup.style.display = '';
+  photo.sizes.forEach(size => {
+    sizesContainer.innerHTML += `
+      <label>
+        <input type="checkbox" name="expoSizes" value="${size}" checked>
+        ${sizeLabels[size] || size}
+      </label><br>
+    `;
+  });
+} else {
+  sizesGroup.style.display = 'none';
+}
+
 
   document.getElementById('exhibitionModal').classList.add('active');
 }
@@ -376,9 +378,15 @@ function setExhibition(event) {
     alert('A data de fim não pode ser anterior à data de início!');
     return;
   }
-  
+
   const photo = photos.find(p => p.id === currentPhotoId);
   if (photo) {
+    // Garante que só crias uma exposição SE exists tamanhos para enviar!
+    if (selectedSizes.length === 0) {
+      alert('Nenhum tamanho selecionado para expor!');
+      return;
+    }
+
     // 1. Criar nova foto para a exposição só com os tamanhos escolhidos
     const newPhoto = {
       ...photo,
@@ -389,7 +397,7 @@ function setExhibition(event) {
         name: exhibitionName,
         start: startDate,
         end: endDate,
-        sizes: selectedSizes, // regista tamanhos na exposição para histórico futuro, se quiseres
+        sizes: selectedSizes,
         notified: false
       }
     };
@@ -406,6 +414,12 @@ function setExhibition(event) {
       photo.sizes = remainingSizes;
     }
 
+    // Limpa qualquer foto sem tamanhos de "Casa"
+    photos = photos.filter(p =>
+      p.location !== 'Casa' ||
+      (Array.isArray(p.sizes) && p.sizes.length > 0)
+    );
+
     savePhotosToStorage();
     renderPhotos();
     updateStats();
@@ -417,17 +431,38 @@ function setExhibition(event) {
 
 
 
+
+
 function returnToHome(id) {
   const photo = photos.find(p => p.id === id);
   if (photo) {
-    photo.location = 'Casa';
-    photo.exhibition = null;
+    // Tenta encontrar outra foto igual em Casa (mesmo nome e imagem)
+    const existing = photos.find(p =>
+      p.location === 'Casa' &&
+      p.name === photo.name &&
+      p.image === photo.image
+    );
+
+    if (existing) {
+      // Junta tamanhos sem duplicados
+      existing.sizes = Array.from(new Set([...(existing.sizes || []), ...(photo.sizes || [])]));
+      // Remove este item que voltou da exposição
+      photos = photos.filter(p => p.id !== photo.id);
+    } else {
+      // Não existe, só move esta para Casa
+      photo.location = 'Casa';
+      photo.exhibition = null;
+    }
+
     savePhotosToStorage();
     renderPhotos();
     updateStats();
     showNotification('🏠 Foto retornou para Casa', 'info');
   }
 }
+
+
+
 
 
 
@@ -451,8 +486,18 @@ function openDB() {
 }
 
 
+function cleanEmptyPhotos() {
+  photos = photos.filter(p =>
+    p.location !== 'Casa' ||
+    (Array.isArray(p.sizes) && p.sizes.length > 0)
+  );
+}
+
+
 function renderPhotos() {
-  const homePhotos = photos.filter(p => p.location === 'Casa');
+  const homePhotos = photos.filter(p => 
+  p.location === 'Casa' && Array.isArray(p.sizes) && p.sizes.length > 0
+);
   const exhibitionPhotos = photos.filter(p => p.location === 'Exposição');
   
   const homeGrid = document.getElementById('photosGrid');
@@ -517,8 +562,9 @@ function createPhotoCard(photo, isExhibition = false) {
 
   // Usa array de tamanhos (photo.sizes) e junta-os para mostrar
   const sizeText = Array.isArray(photo.sizes) && photo.sizes.length > 0
-    ? photo.sizes.map(size => sizeLabels[size]).join(', ')
-    : '';
+  ? photo.sizes.map(size => sizeLabels[size]).join(', ')
+  : '';
+
 
   const actions = isExhibition
     ? `<button class="btn btn-secondary btn-small" onclick="returnToHome(${photo.id})">🏠 Voltar para Casa</button>
@@ -733,7 +779,7 @@ function showExportJsonModal(jsonString) {
 
 
 
-/*function exportData() {
+function exportData() {
   const data = {
     photos: photos,
     exportDate: new Date().toISOString(),
@@ -757,7 +803,7 @@ function showExportJsonModal(jsonString) {
   URL.revokeObjectURL(url);
 
   showNotification('📤 JSON exportado! Verifique a pasta de downloads.', 'success'); 
-}*/
+}
 
 
 //let gapiInitialized = false;
