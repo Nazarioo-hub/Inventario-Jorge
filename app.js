@@ -515,12 +515,30 @@ function renderPhotos() {
   }
   
   // Render exhibition photos
-  if (exhibitionPhotos.length === 0) {
-    exhibitionSection.style.display = 'none';
-  } else {
-    exhibitionSection.style.display = 'block';
-    exhibitionGrid.innerHTML = exhibitionPhotos.map(photo => createPhotoCard(photo, true)).join('');
-  }
+  // Render exhibition photos agrupadas por exposição
+if (exhibitionPhotos.length === 0) {
+  exhibitionSection.style.display = 'none';
+} else {
+  exhibitionSection.style.display = 'block';
+
+  // Agrupa por nome da exposição
+  const grouped = {};
+  exhibitionPhotos.forEach(photo => {
+    const expoName = photo.exhibition?.name || 'Sem nome';
+    if (!grouped[expoName]) grouped[expoName] = [];
+    grouped[expoName].push(photo);
+  });
+
+  exhibitionGrid.innerHTML = Object.entries(grouped).map(([expoName, groupPhotos]) => `
+    <div style="margin-bottom: 2.5rem;">
+      <div class="section-title">🏷️ Exposição: ${expoName}</div>
+      <div class="photos-grid">
+        ${groupPhotos.map(photo => createPhotoCard(photo, true)).join('')}
+      </div>
+    </div>
+  `).join('');
+}
+
 }
 
 function createPhotoCard(photo, isExhibition = false) {
