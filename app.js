@@ -1227,6 +1227,16 @@ function exportExhibitionPDF() {
 }
 
 
+function showHomePhotos() {
+  document.getElementById('homePhotosSection').style.display = '';
+  document.getElementById('exhibitionSection').style.display = 'none';
+}
+
+function showMainDashboard() {
+  document.getElementById('homePhotosSection').style.display = 'none';
+  document.getElementById('exhibitionSection').style.display = ''
+}
+
 
 
 // Notifications

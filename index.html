@@ -586,6 +586,11 @@
   
   <div class="side-menu" id="sideMenu">
     <div class="menu-header">Menu</div>
+    <div class="menu-item" onclick="showHomePhotos()">
+      <span class="menu-item-icon">🏠 Casa (Fotos Disponiveis)</span>
+      <!-- <button class="btn btn-secondary" onclick="showMainDashboard()">Voltar</button> -->
+      <span>Ver Fotos em Casa</span>
+    </div>
     <div class="menu-items">
       <div class="menu-item" onclick="openAddPhotoModal()">
         <span class="menu-item-icon">📷</span>
@@ -735,14 +740,19 @@
       <div class="photos-grid" id="exhibitionGrid"></div>
     </div>
 
+  <div id="homePhotosSection" style="display:none;">
+  <div style="display:flex;justify-content:space-between;align-items:center;">
     <div class="section-title">🏠 Casa (Fotos Disponíveis)</div>
-    <div class="photos-grid" id="photosGrid"></div>
-    <div id="emptyState" class="empty-state">
-      <div class="empty-state-icon">📷</div>
-      <p>Nenhuma foto adicionada ainda</p>
-      <p style="font-size: 0.9rem;">Clique no menu para adicionar a primeira foto</p>
-    </div>
+    <button class="btn btn-secondary" onclick="showMainDashboard()" style="margin-left:1rem;">Voltar</button> 
   </div>
+  <div class="photos-grid" id="photosGrid"></div>
+  <div id="emptyState" class="empty-state">
+    <div class="empty-state-icon">📷</div>
+    <p>Nenhuma foto adicionada ainda</p>
+    <p style="font-size: 0.9rem;">Clique no menu para adicionar a primeira foto</p>
+  </div>
+</div>
+
 
   <button class="fab" onclick="openAddPhotoModal()" aria-label="Adicionar Foto">+</button>
 
