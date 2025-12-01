@@ -162,7 +162,10 @@ function prepareMoveSelectedPhotos(event) {
     return;
   }
 
-  pendingActions = []; // limpa ações pendentes
+  // NÃO limpar pendingActions → mantém todas as exposições já pré-confirmadas
+  // pendingActions = [];
+
+  const groupId = Date.now() + Math.random();
 
   separationPhotos.forEach(photoId => {
     const photo = photos.find(p => p.id === photoId);
@@ -174,7 +177,8 @@ function prepareMoveSelectedPhotos(event) {
     if (selectedSizes.length === 0) return;
 
     pendingActions.push({
-      photo: photo,
+      groupId,
+      photo,
       selectedSizes,
       exhibitionName,
       startDate,
@@ -187,25 +191,55 @@ function prepareMoveSelectedPhotos(event) {
     return;
   }
 
-  // Oculta formulário e mostra a lista de ações para confirmar
+  // Aqui só limpamos a LISTA DE ESPERA, não as ações já guardadas
+  separationPhotos = [];
+  renderSeparationArea();
+
   document.getElementById('multiExhibitionForm').style.display = 'none';
   renderPendingActions();
   document.getElementById('pendingActionsSection').style.display = 'block';
 }
 
 
+
+
+
 function renderPendingActions() {
   const list = document.getElementById('pendingActionsList');
   list.innerHTML = '';
 
-  pendingActions.forEach((action, index) => {
-    const photo = action.photo;
-    const sizes = action.selectedSizes.map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(', ');
-    list.innerHTML += `
-      <div style="margin-bottom: 0.5rem;">
-        <strong>${photo.name}</strong>: mover tamanhos [${sizes}] para exposição <em>"${action.exhibitionName}"</em> (${action.startDate} - ${action.endDate})
-      </div>
-    `;
+  if (pendingActions.length === 0) {
+    list.innerHTML = '<p>Nenhuma ação pendente.</p>';
+    return;
+  }
+
+  const groups = {};
+  pendingActions.forEach(action => {
+    const key = action.exhibitionName;
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(action);
+  });
+
+  Object.entries(groups).forEach(([expoName, actions]) => {
+    const first = actions[0];
+    const wrap = document.createElement('div');
+    wrap.style.marginBottom = '1rem';
+    wrap.style.padding = '0.75rem';
+    wrap.style.border = '1px solid var(--border)';
+    wrap.style.borderRadius = '8px';
+
+    let html = `<div style="font-weight:600; margin-bottom:0.5rem;">Exposição: ${expoName}</div>`;
+    html += `<div style="font-size:0.9rem; margin-bottom:0.5rem;">Período: ${first.startDate} - ${first.endDate}</div>`;
+
+    actions.forEach(action => {
+      const sizes = action.selectedSizes
+        .map(s => s.charAt(0).toUpperCase() + s.slice(1))
+        .join(', ');
+      html += `<div><strong>${action.photo.name}</strong> → tamanhos [${sizes}]</div>`;
+    });
+
+    wrap.innerHTML = html;
+    list.appendChild(wrap);
   });
 }
 
@@ -213,9 +247,6 @@ function confirmMoveActions() {
   pendingActions.forEach(action => {
     const photo = action.photo;
     const selectedSizes = action.selectedSizes;
-    const exhibitionName = action.exhibitionName;
-    const startDate = action.startDate;
-    const endDate = action.endDate;
 
     const newPhoto = {
       ...photo,
@@ -223,15 +254,16 @@ function confirmMoveActions() {
       sizes: selectedSizes,
       location: 'Exposição',
       exhibition: {
-        name: exhibitionName,
-        start: startDate,
-        end: endDate,
+        name: action.exhibitionName,
+        start: action.startDate,
+        end: action.endDate,
         sizes: selectedSizes,
         notified: false
       }
     };
 
     photos.push(newPhoto);
+
     photo.sizes = photo.sizes.filter(s => !selectedSizes.includes(s));
     if (photo.sizes.length === 0) {
       photos = photos.filter(p => p.id !== photo.id);
@@ -244,7 +276,7 @@ function confirmMoveActions() {
   separationPhotos = [];
   renderSeparationArea();
 
-  // Reset modal e esconde área pendente
+  pendingActions = [];
   document.getElementById('pendingActionsSection').style.display = 'none';
   document.getElementById('multiExhibitionForm').style.display = 'block';
   closeMultiExhibitionModal();
@@ -252,10 +284,14 @@ function confirmMoveActions() {
 }
 
 function cancelMoveActions() {
-  pendingActions = [];
+  // NÃO mexe em pendingActions → continua com todas as exposições já criadas
   document.getElementById('pendingActionsSection').style.display = 'none';
   document.getElementById('multiExhibitionForm').style.display = 'block';
+  closeMultiExhibitionModal();
 }
+
+
+
 
 
 
@@ -1345,7 +1381,7 @@ function openMoveSelectedModal() {
   document.getElementById('multiExhibitionModal').classList.add('active');
 }
 
-function confirmMoveSelectedPhotos(event) {
+/* function confirmMoveSelectedPhotos(event) {
   event.preventDefault();
 
   const exhibitionName = document.getElementById('exhibitionNameGlobal').value.trim();
@@ -1400,7 +1436,7 @@ function confirmMoveSelectedPhotos(event) {
   renderSeparationArea();
   closeMultiExhibitionModal();
   showNotification('📦 Fotos movidas para exposição com sucesso!', 'success');
-}
+}*/
 
 
 function closeMultiExhibitionModal() {
