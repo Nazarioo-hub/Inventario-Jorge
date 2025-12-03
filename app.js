@@ -228,6 +228,7 @@ function renderPendingActionsOnMain() {
         </span>
       </label>
       <button class="btn btn-danger btn-small" onclick="deletePendingAction('${action.id}')">🗑️</button>
+
     </div>
   `).join('');
 }
@@ -285,15 +286,13 @@ function executeSelectedActions() {
 
 
 function deletePendingAction(id) {
+  // Remove do array a ação com este id
   pendingActions = pendingActions.filter(a => String(a.id) !== String(id));
+
+  // Atualiza a caixa de movimentos pendentes
   renderPendingActionsOnMain();
 }
 
-
-function deletePendingAction(id) {
-  pendingActions = pendingActions.filter(a => a.id !== id);
-  renderPendingActionsOnMain();
-}
 
 
 
