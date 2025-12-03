@@ -162,9 +162,6 @@ function prepareMoveSelectedPhotos(event) {
     return;
   }
 
-  // NÃO limpar pendingActions → mantém todas as exposições já pré-confirmadas
-  // pendingActions = [];
-
   const groupId = Date.now() + Math.random();
 
   separationPhotos.forEach(photoId => {
@@ -174,11 +171,13 @@ function prepareMoveSelectedPhotos(event) {
     const checkboxes = document.querySelectorAll(`input[name="photoSize-${photoId}"]:checked`);
     const selectedSizes = Array.from(checkboxes).map(cb => cb.value);
 
-    if (selectedSizes.length === 0) return;
+    if (!selectedSizes.length) return;
 
     pendingActions.push({
+      id: Date.now() + Math.random(),   // id único da ação
       groupId,
-      photo,
+      photoId: photo.id,
+      photoName: photo.name,
       selectedSizes,
       exhibitionName,
       startDate,
@@ -186,62 +185,117 @@ function prepareMoveSelectedPhotos(event) {
     });
   });
 
-  if (pendingActions.length === 0) {
+  if (!pendingActions.length) {
     alert('Nenhuma ação para executar. Por favor, selecione tamanhos.');
     return;
   }
 
-  // Aqui só limpamos a LISTA DE ESPERA, não as ações já guardadas
+  // limpa lista de espera mas mantém ações guardadas
   separationPhotos = [];
   renderSeparationArea();
 
-  document.getElementById('multiExhibitionForm').style.display = 'none';
-  renderPendingActions();
-  document.getElementById('pendingActionsSection').style.display = 'block';
+  // fecha o modal de configuração
+  document.getElementById('multiExhibitionForm').reset();
+  document.getElementById('multiExhibitionModal').classList.remove('active');
+
+  // atualiza a caixa na página principal
+  renderPendingActionsOnMain();
 }
 
 
 
 
 
-function renderPendingActions() {
-  const list = document.getElementById('pendingActionsList');
-  list.innerHTML = '';
 
-  if (pendingActions.length === 0) {
-    list.innerHTML = '<p>Nenhuma ação pendente.</p>';
+function renderPendingActionsOnMain() {
+  const area = document.getElementById('pendingActionsArea');
+  const list = document.getElementById('pendingActionsListMain');
+
+  if (!pendingActions.length) {
+    area.style.display = 'none';
+    list.innerHTML = '';
     return;
   }
 
-  const groups = {};
-  pendingActions.forEach(action => {
-    const key = action.exhibitionName;
-    if (!groups[key]) groups[key] = [];
-    groups[key].push(action);
-  });
-
-  Object.entries(groups).forEach(([expoName, actions]) => {
-    const first = actions[0];
-    const wrap = document.createElement('div');
-    wrap.style.marginBottom = '1rem';
-    wrap.style.padding = '0.75rem';
-    wrap.style.border = '1px solid var(--border)';
-    wrap.style.borderRadius = '8px';
-
-    let html = `<div style="font-weight:600; margin-bottom:0.5rem;">Exposição: ${expoName}</div>`;
-    html += `<div style="font-size:0.9rem; margin-bottom:0.5rem;">Período: ${first.startDate} - ${first.endDate}</div>`;
-
-    actions.forEach(action => {
-      const sizes = action.selectedSizes
-        .map(s => s.charAt(0).toUpperCase() + s.slice(1))
-        .join(', ');
-      html += `<div><strong>${action.photo.name}</strong> → tamanhos [${sizes}]</div>`;
-    });
-
-    wrap.innerHTML = html;
-    list.appendChild(wrap);
-  });
+  area.style.display = 'block';
+  list.innerHTML = pendingActions.map(action => `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.5rem;">
+      <label style="display:flex;align-items:center;gap:0.5rem;">
+        <input type="checkbox" class="pending-action-check" data-id="${action.id}">
+        <span>
+          <strong>${action.photoName}</strong> → [${action.selectedSizes.join(', ')}] para "${action.exhibitionName}"
+          (${action.startDate} - ${action.endDate})
+        </span>
+      </label>
+      <button class="btn btn-danger btn-small" onclick="deletePendingAction('${action.id}')">🗑️</button>
+    </div>
+  `).join('');
 }
+
+function executeSelectedActions() {
+  const checks = document.querySelectorAll('.pending-action-check:checked');
+  const idsToRun = Array.from(checks).map(cb => cb.getAttribute('data-id'));
+
+  if (!idsToRun.length) {
+    alert('Selecione pelo menos um movimento para finalizar.');
+    return;
+  }
+
+  idsToRun.forEach(id => {
+    const action = pendingActions.find(a => String(a.id) === String(id));
+    if (!action) return;
+
+    const photo = photos.find(p => p.id === action.photoId);
+    if (!photo) return;
+
+    const selectedSizes = action.selectedSizes;
+
+    const newPhoto = {
+      ...photo,
+      id: Date.now() + Math.random(),
+      sizes: selectedSizes,
+      location: 'Exposição',
+      exhibition: {
+        name: action.exhibitionName,
+        start: action.startDate,
+        end: action.endDate,
+        sizes: selectedSizes,
+        notified: false
+      }
+    };
+
+    photos.push(newPhoto);
+
+    photo.sizes = photo.sizes.filter(s => !selectedSizes.includes(s));
+    if (!photo.sizes.length) {
+      photos = photos.filter(p => p.id !== photo.id);
+    }
+  });
+
+  // remove apenas as ações executadas
+  pendingActions = pendingActions.filter(a => !idsToRun.includes(String(a.id)));
+
+  savePhotosToStorage();
+  renderPhotos();
+  updateStats();
+  renderPendingActionsOnMain();
+
+  showNotification('📦 Movimentos concluídos com sucesso!', 'success');
+}
+
+
+function deletePendingAction(id) {
+  pendingActions = pendingActions.filter(a => String(a.id) !== String(id));
+  renderPendingActionsOnMain();
+}
+
+
+function deletePendingAction(id) {
+  pendingActions = pendingActions.filter(a => a.id !== id);
+  renderPendingActionsOnMain();
+}
+
+
 
 function confirmMoveActions() {
   pendingActions.forEach(action => {

@@ -653,6 +653,8 @@
 
 
 
+
+
     <!--<div class="modal-body">
       <form id="multiExhibitionForm" onsubmit="confirmMoveSelectedPhotos(event)">
         <div class="form-group">
@@ -735,6 +737,17 @@
       </div>
     </div>
 
+        <!-- Movimentos Pendentes (confirmação na página principal) -->
+    <div id="pendingActionsArea" style="display:none; margin:1rem 0; padding:1rem; border:1px solid var(--border); border-radius:8px;">
+      <h3>Movimentos Pendentes</h3>
+      <div id="pendingActionsListMain"></div>
+      <button class="btn btn-primary" onclick="executeSelectedActions()" style="margin-top:0.5rem;">
+        Finalizar Movimentos
+      </button>
+    </div>
+
+
+
     <div id="exhibitionSection" style="display: none;">
       <div class="section-title">📦 Exposições Pendentes</div>
       <div class="photos-grid" id="exhibitionGrid"></div>
@@ -775,8 +788,12 @@
 <div id="separationArea" style="display:none; padding:1rem; border:1px solid var(--border); margin:1rem 0; border-radius:8px;">
   <h3>Fotos para mover para Exposição</h3>
   <div id="separationList"></div>
-  <button onclick="clearSeparationArea()">Cancelar</button>
+  <button class="btn btn-secondary" onclick="clearSeparationArea()">Cancelar Seleção</button>
+  <button class="btn btn-primary" onclick="openMoveSelectedModal()" style="margin-left:0.5rem;">
+    Configurar Movimento ⏩
+  </button>
 </div>
+
 
 
   
