@@ -148,13 +148,23 @@ let pendingActions = [];
 function prepareMoveSelectedPhotos(event) {
   event.preventDefault();
 
-  const exhibitionName = document.getElementById('exhibitionNameGlobal').value.trim();
-  const startDate = document.getElementById('exhibitionStartGlobal').value;
-  const endDate = document.getElementById('exhibitionEndGlobal').value;
+  let exhibitionName = document.getElementById('exhibitionNameGlobal').value.trim();
+  let startDate = document.getElementById('exhibitionStartGlobal').value;
+  let endDate = document.getElementById('exhibitionEndGlobal').value;
 
   if (!exhibitionName || !startDate || !endDate) {
     alert('Por favor, preencha nome e datas corretamente.');
     return;
+  }
+
+  // Se já existir uma foto com esta exposição, força a usar sempre as mesmas datas
+  const existingExpoPhoto = photos.find(
+    p => p.exhibition && p.exhibition.name === exhibitionName
+  );
+
+  if (existingExpoPhoto) {
+    startDate = existingExpoPhoto.exhibition.start;
+    endDate = existingExpoPhoto.exhibition.end;
   }
 
   if (new Date(endDate) < new Date(startDate)) {
@@ -174,7 +184,7 @@ function prepareMoveSelectedPhotos(event) {
     if (!selectedSizes.length) return;
 
     pendingActions.push({
-      id: Date.now() + Math.random(),   // id único da ação
+      id: Date.now() + Math.random(),
       groupId,
       photoId: photo.id,
       photoName: photo.name,
@@ -190,17 +200,15 @@ function prepareMoveSelectedPhotos(event) {
     return;
   }
 
-  // limpa lista de espera mas mantém ações guardadas
   separationPhotos = [];
   renderSeparationArea();
 
-  // fecha o modal de configuração
   document.getElementById('multiExhibitionForm').reset();
   document.getElementById('multiExhibitionModal').classList.remove('active');
 
-  // atualiza a caixa na página principal
   renderPendingActionsOnMain();
 }
+
 
 
 
@@ -291,6 +299,24 @@ function deletePendingAction(id) {
 
   // Atualiza a caixa de movimentos pendentes
   renderPendingActionsOnMain();
+}
+
+function fillGlobalExhibitionNames() {
+  const datalist = document.getElementById('exhibitionNamesListGlobal');
+  if (!datalist) return;
+
+  const namesSet = new Set(
+    photos
+      .filter(p => p.exhibition && p.exhibition.name)
+      .map(p => p.exhibition.name)
+  );
+
+  datalist.innerHTML = '';
+  namesSet.forEach(name => {
+    const opt = document.createElement('option');
+    opt.value = name;
+    datalist.appendChild(opt);
+  });
 }
 
 
@@ -1432,6 +1458,8 @@ function openMoveSelectedModal() {
   document.getElementById('exhibitionEndGlobal').value = today;
 
   document.getElementById('multiExhibitionModal').classList.add('active');
+
+  fillGlobalExhibitionNames();
 }
 
 /* function confirmMoveSelectedPhotos(event) {

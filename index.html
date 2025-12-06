@@ -627,7 +627,15 @@
     <!-- Campos para nome e datas -->
     <div class="form-group">
       <label class="form-label">Nome da Exposição</label>
-      <input type="text" class="form-input" id="exhibitionNameGlobal" required>
+      <input
+        type="text"
+        class="form-input"
+        id="exhibitionNameGlobal"
+        list="exhibitionNamesListGlobal"
+  required
+>
+<datalist id="exhibitionNamesListGlobal"></datalist>
+
     </div>
     <div class="form-group">
       <label class="form-label">Data de Início</label>
